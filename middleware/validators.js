@@ -84,7 +84,12 @@ function validateDoctor(req, res, next) {
 
 
 function validateAppointment(req, res, next) {
-  const { doctor_id, appointment_date, appointment_time } = req.body || {};
+  const {
+    doctor_id,
+    appointment_date,
+    appointment_time,
+    notes
+  } = req.body || {};
   const errors = [];
 
   if (!doctor_id || !Number.isInteger(Number(doctor_id)) || Number(doctor_id) <= 0) {
@@ -101,7 +106,14 @@ function validateAppointment(req, res, next) {
   if (!appointment_time || !TIME_RE.test(appointment_time)) {
     errors.push('appointment_time must be in HH:MM 24-hour format');
   }
-
+  if (notes !== undefined && notes !== null) {
+    if (typeof notes !== 'string') {
+      errors.push('notes must be text');
+    } else if (notes.trim().length > 500) {
+      errors.push('notes must not exceed 500 characters');
+    }
+  }
+  
   if (errors.length) return fail(res, errors);
   next();
 }
