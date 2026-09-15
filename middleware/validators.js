@@ -60,11 +60,22 @@ function validateDoctor(req, res, next) {
   const errors = [];
   if (!name || typeof name !== 'string' || !name.trim()) {
     errors.push('name is required');
+  } else if (name.trim().length > MAX_NAME_LENGTH) {
+    errors.push(`name must not exceed ${MAX_NAME_LENGTH} characters`);
   }
-  if (email && !EMAIL_RE.test(email)) {
-    errors.push('email must be a valid email address');
+  
+  if (email) {
+    if (typeof email !== 'string' || !EMAIL_RE.test(email.trim())) {
+      errors.push('email must be a valid email address');
+    } else if (email.trim().length > MAX_EMAIL_LENGTH) {
+      errors.push(`email must not exceed ${MAX_EMAIL_LENGTH} characters`);
+    }
   }
-  if (phone && !/^[0-9+\-()\s]{6,20}$/.test(phone)) {
+  
+  if (phone && (
+    typeof phone !== 'string' ||
+    !/^[0-9+\-()\s]{6,20}$/.test(phone.trim())
+  )) {
     errors.push('phone must be a valid phone number');
   }
   if (errors.length) return fail(res, errors);
