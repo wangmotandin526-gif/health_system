@@ -7,8 +7,16 @@ const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { validateRecord } = require('../middleware/validators');
 
-const SELECT_WITH_DOCTOR = `SELECT r.*, d.name AS doctor_name
-       FROM records r LEFT JOIN doctors d ON r.doctor_id = d.id`;
+const SELECT_WITH_DOCTOR = `SELECT
+       r.id,
+       r.patient_id,
+       r.doctor_id,
+       r.diagnosis,
+       r.prescription,
+       r.visit_date,
+       d.name AS doctor_name
+       FROM records r
+       LEFT JOIN doctors d ON r.doctor_id = d.id`;
 
 const router = express.Router();
 
