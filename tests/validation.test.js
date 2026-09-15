@@ -92,6 +92,22 @@ describe('POST /api/appointments field-level validation', () => {
     expect(res.body.errors.join(' ')).toMatch(/past/i);
   });
 });
+  it('rejects appointment notes longer than 500 characters', async () => {
+    const longNotes = 'A'.repeat(501);
+  
+    const res = await request(app)
+      .post('/api/appointments')
+      .set('Authorization', `Bearer ${patientToken}`)
+      .send({
+        doctor_id: doctorId,
+        appointment_date: '2099-04-01',
+        appointment_time: '11:00',
+        notes: longNotes
+      });
+  
+    expect(res.status).toBe(400);
+    expect(res.body.errors.join(' ')).toMatch(/notes/i);
+  });
 
 describe('PUT /api/appointments/:id status validation', () => {
   let appointmentId;
