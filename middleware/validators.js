@@ -138,8 +138,27 @@ function validateRecord(req, res, next) {
   if (visit_date && !isValidDate(visit_date)) {
     errors.push('visit_date must be a valid date in YYYY-MM-DD format');
   }
-  if (!diagnosis && !prescription) {
+  if (
+    (!diagnosis || typeof diagnosis !== 'string' || !diagnosis.trim()) &&
+    (!prescription || typeof prescription !== 'string' || !prescription.trim())
+  ) {
     errors.push('at least one of diagnosis or prescription is required');
+  }
+  
+  if (diagnosis && typeof diagnosis !== 'string') {
+    errors.push('diagnosis must be text');
+  }
+  
+  if (prescription && typeof prescription !== 'string') {
+    errors.push('prescription must be text');
+  }
+  
+  if (typeof diagnosis === 'string' && diagnosis.trim().length > 1000) {
+    errors.push('diagnosis must not exceed 1000 characters');
+  }
+  
+  if (typeof prescription === 'string' && prescription.trim().length > 1000) {
+    errors.push('prescription must not exceed 1000 characters');
   }
 
   if (errors.length) return fail(res, errors);
