@@ -24,6 +24,8 @@ router.post(
   '/register',
   validateRegister,
   asyncHandler(async (req, res) => {
+    const { full_name, email, password } = req.body;
+
     const fullName = full_name.trim();
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -53,9 +55,10 @@ router.post(
   requireRole('admin'),
   validateRegister,
   asyncHandler(async (req, res) => {
+    const { full_name, email, password, role } = req.body;
+
     const fullName = full_name.trim();
     const normalizedEmail = email.trim().toLowerCase();
-    const { password, role } = req.body;
     const allowedRoles = ['doctor', 'admin'];
     if (!role || !allowedRoles.includes(role)) {
       throw new AppError(`role must be one of: ${allowedRoles.join(', ')}`, 400);
