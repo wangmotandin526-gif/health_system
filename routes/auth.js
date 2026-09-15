@@ -24,9 +24,13 @@ router.post(
   '/register',
   validateRegister,
   asyncHandler(async (req, res) => {
-    const { full_name, email, password } = req.body;
+    const fullName = full_name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
 
-    const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+    const [existing] = await db.query(
+      'SELECT id FROM users WHERE email = ?',
+      [normalizedEmail]
+    );
     if (existing.length > 0) {
       throw new AppError('Email already registered', 409);
     }
@@ -34,7 +38,7 @@ router.post(
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await db.query(
       'INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
-      [full_name, email, hashedPassword, 'patient']
+      [fullName, normalizedEmail, hashedPassword, 'patient']
     );
 
     logger.info(`New patient registered (user id ${result.insertId})`);
@@ -49,13 +53,18 @@ router.post(
   requireRole('admin'),
   validateRegister,
   asyncHandler(async (req, res) => {
-    const { full_name, email, password, role } = req.body;
+    const fullName = full_name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const { password, role } = req.body;
     const allowedRoles = ['doctor', 'admin'];
     if (!role || !allowedRoles.includes(role)) {
       throw new AppError(`role must be one of: ${allowedRoles.join(', ')}`, 400);
     }
 
-    const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+    const [existing] = await db.query(
+      'SELECT id FROM users WHERE email = ?',
+      [normalizedEmail]
+    );
     if (existing.length > 0) {
       throw new AppError('Email already registered', 409);
     }
@@ -63,7 +72,7 @@ router.post(
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await db.query(
       'INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
-      [full_name, email, hashedPassword, role]
+      [fullName, normalizedEmail, hashedPassword, role]
     );
 
     logger.info(`Admin ${req.user.id} created a new ${role} account (user id ${result.insertId})`);
@@ -76,8 +85,13 @@ router.post(
   loginLimiter,
   validateLogin,
   asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    const { password } = req.body;
+    const normalizedEmail = req.body.email.trim().toLowerCase();
+    
+    const [users] = await db.query(
+      'SELECT * FROM users WHERE email = ?',
+      [normalizedEmail]
+    );
 
     if (users.length === 0) {
       logger.warn(`Login failed: unknown email attempted from ${req.ip}`);
