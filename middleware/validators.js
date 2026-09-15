@@ -1,4 +1,7 @@
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_NAME_LENGTH = 100;
+const MAX_EMAIL_LENGTH = 254;
+const MAX_PASSWORD_LENGTH = 128;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/; // YYYY-MM-DD
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM, 24h
 
@@ -17,13 +20,21 @@ function validateRegister(req, res, next) {
   const errors = [];
 
   if (!full_name || typeof full_name !== 'string' || !full_name.trim()) {
-    errors.push('full_name is required');
+  errors.push('full_name is required');
+  } else if (full_name.trim().length > MAX_NAME_LENGTH) {
+    errors.push(`full_name must not exceed ${MAX_NAME_LENGTH} characters`);
   }
-  if (!email || typeof email !== 'string' || !EMAIL_RE.test(email)) {
+  
+  if (!email || typeof email !== 'string' || !EMAIL_RE.test(email.trim())) {
     errors.push('a valid email is required');
+  } else if (email.trim().length > MAX_EMAIL_LENGTH) {
+    errors.push(`email must not exceed ${MAX_EMAIL_LENGTH} characters`);
   }
+  
   if (!password || typeof password !== 'string' || password.length < 8) {
     errors.push('password must be at least 8 characters');
+  } else if (password.length > MAX_PASSWORD_LENGTH) {
+    errors.push(`password must not exceed ${MAX_PASSWORD_LENGTH} characters`);
   }
 
   if (errors.length) return fail(res, errors);
