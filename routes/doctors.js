@@ -13,7 +13,11 @@ router.get(
   '/',
   verifyToken,
   asyncHandler(async (req, res) => {
-    const [doctors] = await db.query('SELECT * FROM doctors');
+    const [doctors] = await db.query(
+      `SELECT id, name, specialty, email, phone, available_days, photo_url, user_id
+       FROM doctors
+       ORDER BY name ASC`
+    );
     res.json({ success: true, data: doctors });
   })
 );
