@@ -1,4 +1,4 @@
-const API_BASE = ''; // same-origin: server.js serves the frontend AND the API
+const API_BASE = 'https://health-system-sosd.onrender.com'; 
 
 const Auth = {
   saveSession(token, user) {
