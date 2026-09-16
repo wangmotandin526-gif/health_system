@@ -1,12 +1,10 @@
 const logger = require('../utils/logger');
 
 function notFound(req, res) {
-  function notFound(req, res) {
-    res.status(404).json({
-      success: false,
-      message: 'Route not found'
-    });
-  }
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
 }
 
 function errorHandler(err, req, res, next) {
