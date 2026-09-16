@@ -20,6 +20,7 @@ const setupRoutes = require('./routes/setup');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const db = require('./config/db');
+const ensureSeedData = require('./seed');
 
 const app = express();
 
@@ -77,6 +78,10 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
+
+if (process.env.NODE_ENV !== 'test') {
+  ensureSeedData().catch((err) => console.error('Seeding failed:', err));
+}
 
 let server;
 if (process.env.NODE_ENV !== 'test') {
