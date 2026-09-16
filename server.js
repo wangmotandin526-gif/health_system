@@ -44,7 +44,7 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
