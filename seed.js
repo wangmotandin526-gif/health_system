@@ -1,6 +1,6 @@
 const db = require('./config/db');
 
-async function seed() {
+async function ensureSeedData() {
   const [existing] = await db.query('SELECT id FROM doctors');
   if (existing.length > 0) {
     console.log(`Skipping seed: ${existing.length} doctor(s) already in the database.`);
@@ -20,11 +20,13 @@ async function seed() {
     );
   }
   console.log(`Seeded ${doctors.length} doctors.`);
-  console.log('Note: these demo doctors have no linked user_id, so they are not associated with a login account.');
-  console.log('To let a doctor account see "their" appointments, create the doctor via POST /api/doctors with user_id set to that doctor\'s user id.');
 }
 
-seed().catch((err) => {
-  console.error('Seed failed:', err);
-  process.exit(1);
-});
+module.exports = ensureSeedData;
+
+if (require.main === module) {
+  ensureSeedData().catch((err) => {
+    console.error('Seed failed:', err);
+    process.exit(1);
+  });
+}
