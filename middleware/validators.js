@@ -165,6 +165,37 @@ function validateRecord(req, res, next) {
   next();
 }
 
+function validateProfileUpdate(req, res, next) {
+  const { full_name } = req.body || {};
+  const errors = [];
+
+  if (!full_name || typeof full_name !== 'string' || !full_name.trim()) {
+    errors.push('full_name is required');
+  } else if (full_name.trim().length > MAX_NAME_LENGTH) {
+    errors.push(`full_name must not exceed ${MAX_NAME_LENGTH} characters`);
+  }
+
+  if (errors.length) return fail(res, errors);
+  next();
+}
+
+function validatePasswordChange(req, res, next) {
+  const { current_password, new_password } = req.body || {};
+  const errors = [];
+
+  if (!current_password || typeof current_password !== 'string') {
+    errors.push('current_password is required');
+  }
+  if (!new_password || typeof new_password !== 'string' || new_password.length < 8) {
+    errors.push('new_password must be at least 8 characters');
+  } else if (new_password.length > MAX_PASSWORD_LENGTH) {
+    errors.push(`new_password must not exceed ${MAX_PASSWORD_LENGTH} characters`);
+  }
+
+  if (errors.length) return fail(res, errors);
+  next();
+}
+
 module.exports = {
   validateRegister,
   validateLogin,
@@ -172,4 +203,6 @@ module.exports = {
   validateAppointment,
   validateAppointmentStatus,
   validateRecord,
+  validateProfileUpdate,
+  validatePasswordChange,
 };
