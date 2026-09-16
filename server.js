@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -43,12 +44,12 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }
 
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/records', recordRoutes);
-
-app.get('/', (req, res) => res.send('Health System API is running'));
 
 app.get('/health', (req, res) => {
   res.json({ success: true, status: 'ok', uptimeSeconds: process.uptime() });
