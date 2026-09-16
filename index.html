@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IT Health Management Dashboard</title>
-    <!-- Bootstrap 5 CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -14,8 +12,7 @@
 
 <div class="container-fluid">
     <div class="row flex-nowrap">
-        
-        <!-- Sidebar -->
+
         <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 sidebar d-none d-md-block">
             <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
                 <a href="#" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
@@ -44,7 +41,7 @@
                         </a>
                     </li>
                     <li class="w-100">
-                        <a href="#" class="nav-link align-middle">
+                        <a href="#" class="nav-link align-middle disabled" title="Settings page isn't built yet">
                             <i class="bi bi-gear"></i> <span class="ms-1 d-none d-sm-inline">Settings</span>
                         </a>
                     </li>
@@ -53,43 +50,45 @@
             </div>
         </div>
 
-        <!-- Main Content -->
         <div class="col py-3">
-            
-            <!-- Top Navbar / Welcome -->
+
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h3 class="fw-bold text-dark" id="welcomeHeading">Welcome back! 👋</h3>
                     <p class="text-muted mb-0">Here's your health overview for today.</p>
                 </div>
                 <div class="d-flex gap-3">
-                    <button class="btn btn-outline-secondary position-relative">
-                        <i class="bi bi-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            3
-                        </span>
-                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bell"></i>
+                            <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                                0
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end p-2" style="min-width: 320px;" id="notifDropdown">
+                            <li class="text-center text-muted small py-2">Loading notifications...</li>
+                        </ul>
+                    </div>
                     <div class="dropdown">
                         <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle me-1"></i> Profile
                         </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">My Account</a></li>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header" id="profileName">Account</h6></li>
                             <li><a class="dropdown-item" href="#" id="logoutLink">Logout</a></li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <!-- Stats Row: Total Appointments & Quick Info -->
             <div class="row g-3 mb-4">
                 <div class="col-12 col-md-4">
                     <div class="card stat-card p-3 h-100">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <p class="text-muted mb-1 small text-uppercase fw-bold">Total Appointments</p>
-                                <h2 class="fw-bold mb-0">24</h2>
-                                <small class="text-success"><i class="bi bi-arrow-up"></i> 2 this month</small>
+                                <h2 class="fw-bold mb-0" id="statTotalAppointments">–</h2>
+                                <small class="text-muted" id="statTotalAppointmentsNote">Loading...</small>
                             </div>
                             <div class="icon-box bg-primary bg-opacity-10 text-primary">
                                 <i class="bi bi-calendar-event"></i>
@@ -102,8 +101,8 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <p class="text-muted mb-1 small text-uppercase fw-bold">Next Checkup</p>
-                                <h2 class="fw-bold mb-0">Aug 20</h2>
-                                <small class="text-muted">Dr. Sarah Smith</small>
+                                <h2 class="fw-bold mb-0" id="statNextCheckup">–</h2>
+                                <small class="text-muted" id="statNextCheckupDoctor">Loading...</small>
                             </div>
                             <div class="icon-box bg-success bg-opacity-10 text-success">
                                 <i class="bi bi-clock-history"></i>
@@ -115,9 +114,9 @@
                     <div class="card stat-card p-3 h-100">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <p class="text-muted mb-1 small text-uppercase fw-bold">Active Prescriptions</p>
-                                <h2 class="fw-bold mb-0">3</h2>
-                                <small class="text-warning">Refill needed soon</small>
+                                <p class="text-muted mb-1 small text-uppercase fw-bold">Records on File</p>
+                                <h2 class="fw-bold mb-0" id="statRecords">–</h2>
+                                <small class="text-muted" id="statRecordsNote">Loading...</small>
                             </div>
                             <div class="icon-box bg-warning bg-opacity-10 text-warning">
                                 <i class="bi bi-capsule"></i>
@@ -127,14 +126,13 @@
                 </div>
             </div>
 
-            <!-- Middle Section: Upcoming Appointments & Recent Records -->
             <div class="row g-3 mb-4">
-                
-                <!-- Upcoming Appointments -->
+
                 <div class="col-12 col-lg-7">
                     <div class="card stat-card h-100">
-                        <div class="card-header bg-white border-0 py-3">
+                        <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                             <h5 class="mb-0 fw-bold"><i class="bi bi-calendar-plus me-2 text-primary"></i>Upcoming Appointments</h5>
+                            <a href="appointments.html" class="btn btn-sm btn-outline-secondary">View All</a>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -148,28 +146,8 @@
                                             <th>Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td class="fw-semibold">Dr. Sarah Smith</td>
-                                            <td>Cardiology</td>
-                                            <td>Aug 20, 2026 <br><small class="text-muted">10:00 AM</small></td>
-                                            <td><span class="badge bg-success bg-opacity-75">Confirmed</span></td>
-                                            <td><button class="btn btn-sm btn-outline-primary">View</button></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">Dr. James Wilson</td>
-                                            <td>Dermatology</td>
-                                            <td>Aug 25, 2026 <br><small class="text-muted">02:30 PM</small></td>
-                                            <td><span class="badge bg-warning text-dark bg-opacity-75">Pending</span></td>
-                                            <td><button class="btn btn-sm btn-outline-primary">View</button></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-semibold">Dr. Emily Chen</td>
-                                            <td>General Practice</td>
-                                            <td>Sep 02, 2026 <br><small class="text-muted">09:00 AM</small></td>
-                                            <td><span class="badge bg-success bg-opacity-75">Confirmed</span></td>
-                                            <td><button class="btn btn-sm btn-outline-primary">View</button></td>
-                                        </tr>
+                                    <tbody id="dashApptTableBody">
+                                        <tr><td colspan="5" class="text-center text-muted py-4">Loading appointments...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -177,123 +155,52 @@
                     </div>
                 </div>
 
-                <!-- Notifications Panel -->
                 <div class="col-12 col-lg-5">
                     <div class="card stat-card h-100">
                         <div class="card-header bg-white border-0 py-3">
                             <h5 class="mb-0 fw-bold"><i class="bi bi-bell-fill me-2 text-warning"></i>Notifications</h5>
                         </div>
                         <div class="card-body p-0">
-                            <div class="list-group list-group-flush">
-                                <a href="#" class="list-group-item list-group-item-action border-start border-4 border-primary bg-light">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1 fw-bold">Lab Results Ready</h6>
-                                        <small class="text-muted">2 hrs ago</small>
-                                    </div>
-                                    <p class="mb-1 small">Your blood work results from Aug 10 are now available.</p>
-                                </a>
-                                <a href="#" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">Prescription Refill</h6>
-                                        <small class="text-muted">1 day ago</small>
-                                    </div>
-                                    <p class="mb-1 small text-muted">Reminder to refill Lisinopril before Aug 30.</p>
-                                </a>
-                                <a href="#" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">Appointment Reminder</h6>
-                                        <small class="text-muted">3 days ago</small>
-                                    </div>
-                                    <p class="mb-1 small text-muted">Upcoming visit with Dr. Smith in 5 days.</p>
-                                </a>
+                            <div class="list-group list-group-flush" id="dashNotifications">
+                                <div class="list-group-item text-center text-muted small py-4">Loading notifications...</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Section: Recent Health Records & Quick Actions -->
             <div class="row g-3">
-                
-                <!-- Recent Health Records -->
+
                 <div class="col-12 col-md-8">
                     <div class="card stat-card">
                         <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                             <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-medical me-2 text-info"></i>Recent Health Records</h5>
-                            <a href="#" class="btn btn-sm btn-outline-secondary">View All</a>
+                            <a href="records.html" class="btn btn-sm btn-outline-secondary">View All</a>
                         </div>
                         <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center p-3 border rounded bg-white">
-                                        <div class="icon-box bg-danger bg-opacity-10 text-danger me-3">
-                                            <i class="bi bi-file-pdf"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0 fw-bold">Blood Test Report</h6>
-                                            <small class="text-muted">Aug 10, 2026 • 1.2 MB</small>
-                                        </div>
-                                        <a href="#" class="ms-auto btn btn-sm btn-light"><i class="bi bi-download"></i></a>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center p-3 border rounded bg-white">
-                                        <div class="icon-box bg-info bg-opacity-10 text-info me-3">
-                                            <i class="bi bi-image"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0 fw-bold">Chest X-Ray</h6>
-                                            <small class="text-muted">Jul 28, 2026 • 4.5 MB</small>
-                                        </div>
-                                        <a href="#" class="ms-auto btn btn-sm btn-light"><i class="bi bi-download"></i></a>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center p-3 border rounded bg-white">
-                                        <div class="icon-box bg-success bg-opacity-10 text-success me-3">
-                                            <i class="bi bi-file-text"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0 fw-bold">Vaccination Record</h6>
-                                            <small class="text-muted">Jun 15, 2026 • 0.8 MB</small>
-                                        </div>
-                                        <a href="#" class="ms-auto btn btn-sm btn-light"><i class="bi bi-download"></i></a>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="d-flex align-items-center p-3 border rounded bg-white">
-                                        <div class="icon-box bg-warning bg-opacity-10 text-warning me-3">
-                                            <i class="bi bi-clipboard-pulse"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0 fw-bold">Discharge Summary</h6>
-                                            <small class="text-muted">May 20, 2026 • 2.1 MB</small>
-                                        </div>
-                                        <a href="#" class="ms-auto btn btn-sm btn-light"><i class="bi bi-download"></i></a>
-                                    </div>
-                                </div>
+                            <div class="row g-3" id="dashRecordsList">
+                                <div class="col-12 text-center text-muted py-4">Loading records...</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
                 <div class="col-12 col-md-4">
                     <div class="card stat-card h-100">
                         <div class="card-header bg-white border-0 py-3">
                             <h5 class="mb-0 fw-bold"><i class="bi bi-lightning-charge me-2 text-primary"></i>Quick Actions</h5>
                         </div>
                         <div class="card-body d-grid gap-2">
-                            <button class="btn btn-primary d-flex align-items-center justify-content-center gap-2 py-3">
+                            <a href="appointments.html" class="btn btn-primary d-flex align-items-center justify-content-center gap-2 py-3">
                                 <i class="bi bi-calendar-plus fs-5"></i> Book Appointment
-                            </button>
-                            <button class="btn btn-outline-success d-flex align-items-center justify-content-center gap-2 py-3">
-                                <i class="bi bi-upload fs-5"></i> Upload Records
-                            </button>
-                            <button class="btn btn-outline-info d-flex align-items-center justify-content-center gap-2 py-3">
+                            </a>
+                            <a href="records.html" class="btn btn-outline-success d-flex align-items-center justify-content-center gap-2 py-3">
+                                <i class="bi bi-file-earmark-medical fs-5"></i> View Records
+                            </a>
+                            <button type="button" class="btn btn-outline-info d-flex align-items-center justify-content-center gap-2 py-3" id="btnMessageDoctor">
                                 <i class="bi bi-chat-dots fs-5"></i> Message Doctor
                             </button>
-                            <button class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 py-3">
+                            <button type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-2 py-3" id="btnRequestRefill">
                                 <i class="bi bi-prescription fs-5"></i> Request Refill
                             </button>
                         </div>
@@ -302,7 +209,6 @@
 
             </div>
 
-            <!-- Footer -->
             <footer class="mt-5 mb-3 text-center text-muted small">
                 <p>&copy; 2026 IT Health Management System. All rights reserved.</p>
             </footer>
@@ -311,18 +217,220 @@
     </div>
 </div>
 
-<!-- Bootstrap 5 JS Bundle -->
+<div class="modal fade" id="recordDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-file-medical me-2 text-primary"></i>Medical Record Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="recordDetailBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="infoToast" class="toast align-items-center text-bg-dark border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body" id="infoToastBody">...</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/auth.js"></script>
 <script>
-    const currentUser = Auth.requireAuth(); // redirects to login.html if not logged in
-    if (currentUser) {
-        document.getElementById('welcomeHeading').textContent = `Welcome back, ${currentUser.full_name}! 👋`;
+const currentUser = Auth.requireAuth(); // redirects to login.html if not logged in
+if (currentUser) {
+    document.getElementById('welcomeHeading').textContent = `Welcome back, ${currentUser.full_name}! 👋`;
+    document.getElementById('profileName').textContent = `${currentUser.full_name} (${currentUser.role})`;
+}
+document.getElementById('logoutLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    Auth.logout();
+});
+
+const statusBadge = {
+    pending: 'bg-warning text-dark bg-opacity-75',
+    confirmed: 'bg-success bg-opacity-75',
+    cancelled: 'bg-secondary',
+    completed: 'bg-primary',
+};
+
+function formatDate(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+}
+
+function showToast(message) {
+    document.getElementById('infoToastBody').textContent = message;
+    new bootstrap.Toast(document.getElementById('infoToast')).show();
+}
+
+let appointmentsCache = [];
+let recordsCache = [];
+
+async function loadAppointments() {
+    const tbody = document.getElementById('dashApptTableBody');
+    try {
+        const res = await Auth.apiFetch('/api/appointments/my');
+        appointmentsCache = res.data || [];
+
+        const now = new Date();
+        const upcoming = appointmentsCache
+            .filter(a => a.status !== 'cancelled' && a.status !== 'completed')
+            .sort((a, b) => new Date(`${a.appointment_date}T${a.appointment_time}`) - new Date(`${b.appointment_date}T${b.appointment_time}`));
+
+        document.getElementById('statTotalAppointments').textContent = appointmentsCache.length;
+        document.getElementById('statTotalAppointmentsNote').textContent =
+            appointmentsCache.length === 0 ? 'No appointments yet' : `${upcoming.length} upcoming`;
+
+        const future = upcoming.filter(a => new Date(`${a.appointment_date}T${a.appointment_time}`) >= now);
+        if (future.length > 0) {
+            document.getElementById('statNextCheckup').textContent = formatDate(future[0].appointment_date);
+            document.getElementById('statNextCheckupDoctor').textContent = future[0].doctor_name;
+        } else {
+            document.getElementById('statNextCheckup').textContent = 'None';
+            document.getElementById('statNextCheckupDoctor').textContent = 'Nothing scheduled';
+        }
+
+        const rows = upcoming.slice(0, 5);
+        if (rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No upcoming appointments. <a href="appointments.html">Book one</a>.</td></tr>';
+        } else {
+            tbody.innerHTML = rows.map(a => `
+                <tr>
+                    <td class="fw-semibold">${a.doctor_name}</td>
+                    <td>${a.specialty || '-'}</td>
+                    <td>${formatDate(a.appointment_date)} <br><small class="text-muted">${a.appointment_time}</small></td>
+                    <td><span class="badge ${statusBadge[a.status] || 'bg-secondary'}">${a.status}</span></td>
+                    <td><a href="appointments.html" class="btn btn-sm btn-outline-primary">View</a></td>
+                </tr>
+            `).join('');
+        }
+
+        renderNotifications(future);
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">${err.message}</td></tr>`;
+        document.getElementById('statTotalAppointments').textContent = '–';
+        document.getElementById('statTotalAppointmentsNote').textContent = err.message;
+        document.getElementById('statNextCheckup').textContent = '–';
+        document.getElementById('statNextCheckupDoctor').textContent = err.message;
+        renderNotifications([]);
     }
-    document.getElementById('logoutLink').addEventListener('click', function (e) {
-        e.preventDefault();
-        Auth.logout();
-    });
+}
+
+function renderNotifications(future) {
+    const list = document.getElementById('dashNotifications');
+    const dropdown = document.getElementById('notifDropdown');
+    const badge = document.getElementById('notifBadge');
+
+    const items = future.slice(0, 5).map(a => ({
+        title: 'Appointment Reminder',
+        body: `${a.status === 'pending' ? 'Pending' : 'Confirmed'} visit with ${a.doctor_name} on ${formatDate(a.appointment_date)} at ${a.appointment_time}.`,
+    }));
+
+    if (items.length === 0) {
+        list.innerHTML = '<div class="list-group-item text-center text-muted small py-4">No upcoming appointments to remind you about.</div>';
+        dropdown.innerHTML = '<li class="text-center text-muted small py-2 px-2">No new notifications</li>';
+        badge.classList.add('d-none');
+        return;
+    }
+
+    list.innerHTML = items.map((n, i) => `
+        <a href="appointments.html" class="list-group-item list-group-item-action ${i === 0 ? 'border-start border-4 border-primary bg-light' : ''}">
+            <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1 ${i === 0 ? 'fw-bold' : ''}">${n.title}</h6>
+            </div>
+            <p class="mb-1 small ${i === 0 ? '' : 'text-muted'}">${n.body}</p>
+        </a>
+    `).join('');
+
+    dropdown.innerHTML = items.map(n => `
+        <li><a class="dropdown-item small py-2" href="appointments.html"><strong>${n.title}:</strong> ${n.body}</a></li>
+    `).join('');
+
+    badge.textContent = items.length;
+    badge.classList.remove('d-none');
+}
+
+async function loadRecords() {
+    const container = document.getElementById('dashRecordsList');
+
+    if (currentUser && currentUser.role !== 'patient') {
+        container.innerHTML = '<div class="col-12 text-center text-muted py-4">Log in as a patient to view personal records here.</div>';
+        document.getElementById('statRecords').textContent = '–';
+        document.getElementById('statRecordsNote').textContent = 'Patient login required';
+        return;
+    }
+
+    try {
+        const res = await Auth.apiFetch('/api/records/my');
+        recordsCache = (res.data || []).sort((a, b) => new Date(b.visit_date) - new Date(a.visit_date));
+
+        const withPrescription = recordsCache.filter(r => r.prescription && r.prescription.trim() !== '').length;
+        document.getElementById('statRecords').textContent = recordsCache.length;
+        document.getElementById('statRecordsNote').textContent =
+            recordsCache.length === 0 ? 'No records yet' : `${withPrescription} with a prescription`;
+
+        if (recordsCache.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center text-muted py-4">No medical records yet.</div>';
+            return;
+        }
+
+        const icons = [
+            { icon: 'bi-file-earmark-text', cls: 'text-danger bg-danger' },
+            { icon: 'bi-clipboard-pulse', cls: 'text-info bg-info' },
+            { icon: 'bi-file-medical', cls: 'text-success bg-success' },
+            { icon: 'bi-capsule', cls: 'text-warning bg-warning' },
+        ];
+        container.innerHTML = recordsCache.slice(0, 4).map((r, i) => `
+            <div class="col-md-6">
+                <div class="d-flex align-items-center p-3 border rounded bg-white">
+                    <div class="icon-box ${icons[i % icons.length].cls} bg-opacity-10 me-3">
+                        <i class="bi ${icons[i % icons.length].icon}"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0 fw-bold">${r.diagnosis || 'Visit record'}</h6>
+                        <small class="text-muted">${formatDate(r.visit_date)} &bull; ${r.doctor_name || 'Unassigned'}</small>
+                    </div>
+                    <button class="ms-auto btn btn-sm btn-light" onclick="viewRecord(${r.id})"><i class="bi bi-eye"></i></button>
+                </div>
+            </div>
+        `).join('');
+    } catch (err) {
+        container.innerHTML = `<div class="col-12 text-center text-danger py-4">${err.message}</div>`;
+        document.getElementById('statRecords').textContent = '–';
+        document.getElementById('statRecordsNote').textContent = err.message;
+    }
+}
+
+function viewRecord(id) {
+    const r = recordsCache.find(rec => rec.id === id);
+    if (!r) return;
+    document.getElementById('recordDetailBody').innerHTML = `
+        <p><strong>Date:</strong> ${formatDate(r.visit_date)}</p>
+        <p><strong>Doctor:</strong> ${r.doctor_name || 'Unassigned'}</p>
+        <p><strong>Diagnosis:</strong> ${r.diagnosis || '-'}</p>
+        <p><strong>Prescription:</strong> ${r.prescription || '-'}</p>
+    `;
+    new bootstrap.Modal(document.getElementById('recordDetailModal')).show();
+}
+
+document.getElementById('btnMessageDoctor').addEventListener('click', () => {
+    showToast("Messaging isn't built yet — there's no chat endpoint in the backend. This would need a new /api/messages route.");
+});
+document.getElementById('btnRequestRefill').addEventListener('click', () => {
+    showToast("Refill requests aren't built yet — there's no endpoint for them. For now, book a follow-up appointment and note the refill there.");
+});
+
+loadAppointments();
+loadRecords();
 </script>
 
 </body>
