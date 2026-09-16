@@ -45,7 +45,23 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
 }
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/img', express.static(path.join(__dirname, 'img')));
+
+const pages = [
+  'index.html',
+  'login.html',
+  'register.html',
+  'appointments.html',
+  'doctors.html',
+  'records.html',
+  'settings.html',
+];
+pages.forEach((page) => {
+  app.get(`/${page}`, (req, res) => res.sendFile(path.join(__dirname, page)));
+});
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
