@@ -59,7 +59,7 @@
             <!-- Top Navbar / Welcome -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h3 class="fw-bold text-dark">Welcome back, Alex! 👋</h3>
+                    <h3 class="fw-bold text-dark" id="welcomeHeading">Welcome back! 👋</h3>
                     <p class="text-muted mb-0">Here's your health overview for today.</p>
                 </div>
                 <div class="d-flex gap-3">
@@ -75,7 +75,7 @@
                         </button>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="#">My Account</a></li>
-                            <li><a class="dropdown-item" href="#">Logout</a></li>
+                            <li><a class="dropdown-item" href="#" id="logoutLink">Logout</a></li>
                         </ul>
                     </div>
                 </div>
@@ -109,100 +109,8 @@
                                 </tr>
                             </thead>
 
-                            <tbody>
-
-                                <!-- Record 1 -->
-                                <tr>
-                                    <td>1</td>
-                                    <td>Aug 10, 2026</td>
-                                    <td class="fw-semibold">Dr. Sarah Smith</td>
-                                    <td>High Blood Pressure</td>
-                                    <td>Medication</td>
-                                    <td>
-                                        <span class="badge bg-warning text-dark">
-                                            Ongoing
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button
-                                            class="btn btn-sm btn-outline-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#medicalHistory1">
-                                            <i class="bi bi-eye me-1"></i>
-                                            View
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- Record 2 -->
-                                <tr>
-                                    <td>2</td>
-                                    <td>Jul 20, 2026</td>
-                                    <td class="fw-semibold">Dr. James Wilson</td>
-                                    <td>Skin Allergy</td>
-                                    <td>Allergy Medication</td>
-                                    <td>
-                                        <span class="badge bg-success">
-                                            Recovered
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button
-                                            class="btn btn-sm btn-outline-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#medicalHistory2">
-                                            <i class="bi bi-eye me-1"></i>
-                                            View
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- Record 3 -->
-                                <tr>
-                                    <td>3</td>
-                                    <td>Jun 15, 2026</td>
-                                    <td class="fw-semibold">Dr. Emily Chen</td>
-                                    <td>Seasonal Flu</td>
-                                    <td>Rest and Medication</td>
-                                    <td>
-                                        <span class="badge bg-success">
-                                            Recovered
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button
-                                            class="btn btn-sm btn-outline-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#medicalHistory3">
-                                            <i class="bi bi-eye me-1"></i>
-                                            View
-                                        </button>
-                                    </td>
-                                </tr>
-
-                                <!-- Record 4 -->
-                                <tr>
-                                    <td>4</td>
-                                    <td>May 05, 2026</td>
-                                    <td class="fw-semibold">Dr. Michael Brown</td>
-                                    <td>Migraine</td>
-                                    <td>Pain Management</td>
-                                    <td>
-                                        <span class="badge bg-secondary">
-                                            Completed
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button
-                                            class="btn btn-sm btn-outline-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#medicalHistory4">
-                                            <i class="bi bi-eye me-1"></i>
-                                            View
-                                        </button>
-                                    </td>
-                                </tr>
-
+                            <tbody id="recordsTableBody">
+                                <tr><td colspan="7" class="text-center text-muted py-4">Loading records...</td></tr>
                             </tbody>
 
                         </table>
@@ -213,301 +121,27 @@
             </div>
 
 
-            <!-- ============================= -->
-            <!-- Medical History Modal 1 -->
-            <!-- ============================= -->
-
-            <div class="modal fade" id="medicalHistory1" tabindex="-1">
+            <!-- Single reusable Record Detail Modal, filled in by JS -->
+            <div class="modal fade" id="recordDetailModal" tabindex="-1">
                 <div class="modal-dialog modal-lg modal-dialog-centered">
-
                     <div class="modal-content border-0 shadow">
-
                         <div class="modal-header">
                             <h5 class="modal-title fw-bold">
                                 <i class="bi bi-file-medical me-2 text-primary"></i>
                                 Medical Record Details
                             </h5>
-
-                            <button
-                                type="button"
-                                class="btn-close"
-                                data-bs-dismiss="modal">
-                            </button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-
-                        <div class="modal-body">
-
-                            <div class="row g-3">
-
-                                <div class="col-md-6">
-                                    <small class="text-muted">Visit Date</small>
-                                    <p class="fw-semibold mb-0">Aug 10, 2026</p>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <small class="text-muted">Doctor</small>
-                                    <p class="fw-semibold mb-0">Dr. Sarah Smith</p>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <small class="text-muted">Specialty</small>
-                                    <p class="fw-semibold mb-0">Cardiology</p>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <small class="text-muted">Status</small>
-                                    <p class="mb-0">
-                                        <span class="badge bg-warning text-dark">
-                                            Ongoing
-                                        </span>
-                                    </p>
-                                </div>
-
-                                <div class="col-12">
-                                    <hr>
-                                </div>
-
-                                <div class="col-12">
-                                    <small class="text-muted">Diagnosis</small>
-                                    <p class="fw-semibold">
-                                        High Blood Pressure
-                                    </p>
-                                </div>
-
-                                <div class="col-12">
-                                    <small class="text-muted">Symptoms</small>
-                                    <p>
-                                        Headache, dizziness and occasional tiredness.
-                                    </p>
-                                </div>
-
-                                <div class="col-12">
-                                    <small class="text-muted">Treatment</small>
-                                    <p>
-                                        Blood pressure medication and regular monitoring.
-                                    </p>
-                                </div>
-
-                                <div class="col-12">
-                                    <small class="text-muted">Prescription</small>
-                                    <p>
-                                        Lisinopril 10mg once daily.
-                                    </p>
-                                </div>
-
-                                <div class="col-12">
-                                    <small class="text-muted">Doctor Notes</small>
-                                    <p>
-                                        Patient should reduce salt intake, exercise regularly
-                                        and return for a follow-up appointment after one month.
-                                    </p>
-                                </div>
-
-                            </div>
-
+                        <div class="modal-body" id="recordDetailBody">
+                            <!-- populated by JS -->
                         </div>
-
                         <div class="modal-footer">
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                data-bs-dismiss="modal">
-                                Close
-                            </button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
-
                     </div>
                 </div>
             </div>
 
-
-            <!-- ============================= -->
-            <!-- Medical History Modal 2 -->
-            <!-- ============================= -->
-
-            <div class="modal fade" id="medicalHistory2" tabindex="-1">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-
-                    <div class="modal-content border-0 shadow">
-
-                        <div class="modal-header">
-                            <h5 class="modal-title fw-bold">
-                                <i class="bi bi-file-medical me-2 text-primary"></i>
-                                Medical Record Details
-                            </h5>
-
-                            <button
-                                type="button"
-                                class="btn-close"
-                                data-bs-dismiss="modal">
-                            </button>
-                        </div>
-
-                        <div class="modal-body">
-
-                            <div class="row g-3">
-
-                                <div class="col-md-6">
-                                    <small class="text-muted">Visit Date</small>
-                                    <p class="fw-semibold">Jul 20, 2026</p>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <small class="text-muted">Doctor</small>
-                                    <p class="fw-semibold">Dr. James Wilson</p>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <small class="text-muted">Specialty</small>
-                                    <p class="fw-semibold">Dermatology</p>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <small class="text-muted">Status</small>
-                                    <p>
-                                        <span class="badge bg-success">
-                                            Recovered
-                                        </span>
-                                    </p>
-                                </div>
-
-                                <div class="col-12">
-                                    <hr>
-                                </div>
-
-                                <div class="col-12">
-                                    <small class="text-muted">Diagnosis</small>
-                                    <p class="fw-semibold">Skin Allergy</p>
-                                </div>
-
-                                <div class="col-12">
-                                    <small class="text-muted">Symptoms</small>
-                                    <p>Skin redness, itching and irritation.</p>
-                                </div>
-
-                                <div class="col-12">
-                                    <small class="text-muted">Treatment</small>
-                                    <p>Antihistamine medication and skin cream.</p>
-                                </div>
-
-                                <div class="col-12">
-                                    <small class="text-muted">Doctor Notes</small>
-                                    <p>
-                                        Avoid products that may cause skin irritation
-                                        and continue medication for seven days.
-                                    </p>
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                        <div class="modal-footer">
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                data-bs-dismiss="modal">
-                                Close
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- ============================= -->
-            <!-- Medical History Modal 3 -->
-            <!-- ============================= -->
-
-            <div class="modal fade" id="medicalHistory3" tabindex="-1">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-
-                    <div class="modal-content border-0 shadow">
-
-                        <div class="modal-header">
-                            <h5 class="modal-title fw-bold">
-                                <i class="bi bi-file-medical me-2 text-primary"></i>
-                                Medical Record Details
-                            </h5>
-
-                            <button
-                                type="button"
-                                class="btn-close"
-                                data-bs-dismiss="modal">
-                            </button>
-                        </div>
-
-                        <div class="modal-body">
-
-                            <p><strong>Date:</strong> Jun 15, 2026</p>
-                            <p><strong>Doctor:</strong> Dr. Emily Chen</p>
-                            <p><strong>Diagnosis:</strong> Seasonal Flu</p>
-                            <p><strong>Symptoms:</strong> Fever, cough and tiredness.</p>
-                            <p><strong>Treatment:</strong> Rest, fluids and medication.</p>
-                            <p><strong>Status:</strong> Recovered</p>
-
-                        </div>
-
-                        <div class="modal-footer">
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                data-bs-dismiss="modal">
-                                Close
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- ============================= -->
-            <!-- Medical History Modal 4 -->
-            <!-- ============================= -->
-
-            <div class="modal fade" id="medicalHistory4" tabindex="-1">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-
-                    <div class="modal-content border-0 shadow">
-
-                        <div class="modal-header">
-                            <h5 class="modal-title fw-bold">
-                                <i class="bi bi-file-medical me-2 text-primary"></i>
-                                Medical Record Details
-                            </h5>
-
-                            <button
-                                type="button"
-                                class="btn-close"
-                                data-bs-dismiss="modal">
-                            </button>
-                        </div>
-
-                        <div class="modal-body">
-
-                            <p><strong>Date:</strong> May 05, 2026</p>
-                            <p><strong>Doctor:</strong> Dr. Michael Brown</p>
-                            <p><strong>Diagnosis:</strong> Migraine</p>
-                            <p><strong>Symptoms:</strong> Headache and sensitivity to light.</p>
-                            <p><strong>Treatment:</strong> Pain management medication.</p>
-                            <p><strong>Status:</strong> Completed</p>
-
-                        </div>
-
-                        <div class="modal-footer">
-                            <button
-                                type="button"
-                                class="btn btn-secondary"
-                                data-bs-dismiss="modal">
-                                Close
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
 
             <!-- Footer -->
             <footer class="mt-5 mb-3 text-center text-muted small">
@@ -520,6 +154,78 @@
 
 <!-- Bootstrap 5 JS Bundle -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/auth.js"></script>
+<script>
+const currentUser = Auth.requireAuth();
+if (currentUser) {
+    document.getElementById('welcomeHeading').textContent = `Welcome back, ${currentUser.full_name}! 👋`;
+}
+document.getElementById('logoutLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    Auth.logout();
+});
+
+function formatDate(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+}
+
+let recordsCache = [];
+
+async function loadRecords() {
+    const tbody = document.getElementById('recordsTableBody');
+
+    // The /api/records/my endpoint is patient-only. Doctors/admins would
+    // use /api/records/patient/:id instead -- shown here for a patient login.
+    if (currentUser && currentUser.role !== 'patient') {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">Log in as a patient to view personal records here.</td></tr>';
+        return;
+    }
+
+    try {
+        const res = await Auth.apiFetch('/api/records/my');
+        recordsCache = res.data;
+
+        if (recordsCache.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No medical records yet.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = recordsCache.map((r, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${formatDate(r.visit_date)}</td>
+                <td class="fw-semibold">${r.doctor_name || 'Unassigned'}</td>
+                <td>${r.diagnosis || '-'}</td>
+                <td>${r.prescription || '-'}</td>
+                <td><span class="badge bg-secondary">Recorded</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewRecord(${r.id})">
+                        <i class="bi bi-eye me-1"></i>View
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${err.message}</td></tr>`;
+    }
+}
+
+function viewRecord(id) {
+    const r = recordsCache.find(rec => rec.id === id);
+    if (!r) return;
+    document.getElementById('recordDetailBody').innerHTML = `
+        <p><strong>Date:</strong> ${formatDate(r.visit_date)}</p>
+        <p><strong>Doctor:</strong> ${r.doctor_name || 'Unassigned'}</p>
+        <p><strong>Diagnosis:</strong> ${r.diagnosis || '-'}</p>
+        <p><strong>Prescription:</strong> ${r.prescription || '-'}</p>
+    `;
+    new bootstrap.Modal(document.getElementById('recordDetailModal')).show();
+}
+
+loadRecords();
+</script>
 
 </body>
 </html>
