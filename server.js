@@ -16,6 +16,7 @@ const authRoutes = require('./routes/auth');
 const doctorRoutes = require('./routes/doctors');
 const appointmentRoutes = require('./routes/appointments');
 const recordRoutes = require('./routes/records');
+const setupRoutes = require('./routes/setup');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const db = require('./config/db');
@@ -50,6 +51,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/records', recordRoutes);
+app.use('/api/setup', setupRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ success: true, status: 'ok', uptimeSeconds: process.uptime() });
