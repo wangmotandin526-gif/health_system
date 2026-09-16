@@ -8,7 +8,7 @@ const requireRole = require('../middleware/roles');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
-const { validateRegister, validateLogin } = require('../middleware/validators');
+const { validateRegister, validateLogin, validateProfileUpdate, validatePasswordChange } = require('../middleware/validators');
 
 const router = express.Router();
 
@@ -120,6 +120,65 @@ router.post(
       message: 'Login successful',
       data: { token, user: { id: user.id, full_name: user.full_name, role: user.role } },
     });
+  })
+);
+
+router.get(
+  '/me',
+  verifyToken,
+  asyncHandler(async (req, res) => {
+    const [rows] = await db.query(
+      'SELECT id, full_name, email, role, created_at FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    if (rows.length === 0) throw new AppError('User not found', 404);
+    res.json({ success: true, data: rows[0] });
+  })
+);
+
+router.patch(
+  '/me',
+  verifyToken,
+  validateProfileUpdate,
+  asyncHandler(async (req, res) => {
+    const fullName = req.body.full_name.trim();
+    await db.query('UPDATE users SET full_name = ? WHERE id = ?', [fullName, req.user.id]);
+    logger.info(`User ${req.user.id} updated their profile`);
+
+    const token = jwt.sign(
+      { id: req.user.id, role: req.user.role, full_name: fullName },
+      process.env.JWT_SECRET,
+      { expiresIn: '2h' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Profile updated',
+      data: { token, user: { id: req.user.id, full_name: fullName, role: req.user.role } },
+    });
+  })
+);
+
+router.post(
+  '/change-password',
+  verifyToken,
+  validatePasswordChange,
+  asyncHandler(async (req, res) => {
+    const { current_password, new_password } = req.body;
+
+    const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [req.user.id]);
+    if (rows.length === 0) throw new AppError('User not found', 404);
+    const user = rows[0];
+
+    const match = await bcrypt.compare(current_password, user.password);
+    if (!match) {
+      throw new AppError('Current password is incorrect', 401);
+    }
+
+    const hashed = await bcrypt.hash(new_password, 10);
+    await db.query('UPDATE users SET password = ? WHERE id = ?', [hashed, req.user.id]);
+    logger.info(`User ${req.user.id} changed their password`);
+    res.json({ success: true, message: 'Password changed successfully' });
   })
 );
 
