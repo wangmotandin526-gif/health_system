@@ -192,14 +192,6 @@
                         </p>
                     </div>
 
-                    <!-- Admin-only: first-time setup -->
-                    <div class="text-center mt-4 d-none" id="adminOnlyLinks">
-                        <p class="text-muted small mb-0">
-                            No admin account yet?
-                            <a href="setup.html" class="text-decoration-none">Run first-time setup</a>
-                        </p>
-                    </div>
-
                 </div>
 
             </div>
@@ -219,7 +211,6 @@ const loginStep = document.getElementById('loginStep');
 const loginHeading = document.getElementById('loginHeading');
 const loginSubheading = document.getElementById('loginSubheading');
 const clientOnlyLinks = document.getElementById('clientOnlyLinks');
-const adminOnlyLinks = document.getElementById('adminOnlyLinks');
 const loginError = document.getElementById('loginError');
 
 document.querySelectorAll('.role-choice-btn').forEach((btn) => {
@@ -234,13 +225,11 @@ document.querySelectorAll('.role-choice-btn').forEach((btn) => {
         if (selectedRole === 'admin') {
             loginHeading.textContent = 'Admin Login';
             loginSubheading.textContent = 'Log in with your admin credentials.';
-            adminOnlyLinks.classList.remove('d-none');
             clientOnlyLinks.classList.add('d-none');
         } else {
             loginHeading.textContent = 'Welcome Back';
             loginSubheading.textContent = 'Please login to access your account.';
             clientOnlyLinks.classList.remove('d-none');
-            adminOnlyLinks.classList.add('d-none');
         }
 
         document.getElementById('email').focus();
