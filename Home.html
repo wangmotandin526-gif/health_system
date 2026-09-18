@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthSys - IT Health Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .hero {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #fff;
+            padding: 90px 0 110px;
+        }
+        .hero h1 { font-weight: 700; }
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .navbar-brand i { color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="home.html">
+            <i class="bi bi-heart-pulse me-2"></i>HealthSys
+        </a>
+        <div class="d-flex gap-2">
+            <a href="login.html" class="btn btn-outline-primary">Login</a>
+            <a href="register.html" class="btn btn-primary">Create Account</a>
+        </div>
+    </div>
+</nav>
+
+<header class="hero text-center">
+    <div class="container">
+        <h1 class="display-5 mb-3">A simple, secure way to manage your healthcare</h1>
+        <p class="lead mb-4 mx-auto" style="max-width: 640px;">
+            HealthSys is an IT Health Management System that lets patients book
+            appointments with doctors, keep track of their medical records, and
+            lets clinic staff manage doctors, appointments and patient data --
+            all from one dashboard.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="register.html" class="btn btn-light btn-lg"><i class="bi bi-person-plus me-2"></i>Get Started</a>
+            <a href="login.html" class="btn btn-outline-light btn-lg"><i class="bi bi-box-arrow-in-right me-2"></i>Login</a>
+        </div>
+    </div>
+</header>
+
+<section class="container py-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">What you can do with HealthSys</h2>
+        <p class="text-muted">One account, three roles: patient, doctor and admin.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="feature-icon bg-primary bg-opacity-10 text-primary mb-3">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <h5 class="fw-bold">Book appointments</h5>
+                <p class="text-muted mb-0">
+                    Patients can browse doctors by specialty and availability, and
+                    book, view or cancel their own appointments online.
+                </p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="feature-icon bg-success bg-opacity-10 text-success mb-3">
+                    <i class="bi bi-file-medical"></i>
+                </div>
+                <h5 class="fw-bold">Track medical records</h5>
+                <p class="text-muted mb-0">
+                    Doctors record diagnoses and prescriptions after a visit, and
+                    patients can see their own history at any time.
+                </p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="feature-icon bg-warning bg-opacity-10 text-warning mb-3">
+                    <i class="bi bi-shield-lock"></i>
+                </div>
+                <h5 class="fw-bold">Role-based access</h5>
+                <p class="text-muted mb-0">
+                    Patients, doctors and admins each see only what's relevant to
+                    them, enforced by the server, not just hidden in the UI.
+                </p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="feature-icon bg-info bg-opacity-10 text-info mb-3">
+                    <i class="bi bi-person-badge"></i>
+                </div>
+                <h5 class="fw-bold">Doctor directory</h5>
+                <p class="text-muted mb-0">
+                    Every doctor's specialty, contact details and available days
+                    are kept in the database and shown to patients when booking.
+                </p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="feature-icon bg-danger bg-opacity-10 text-danger mb-3">
+                    <i class="bi bi-people"></i>
+                </div>
+                <h5 class="fw-bold">Admin tools</h5>
+                <p class="text-muted mb-0">
+                    Admins can add doctors, create staff accounts, and manage
+                    every user's role from the Account Management page.
+                </p>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="feature-icon bg-secondary bg-opacity-10 text-secondary mb-3">
+                    <i class="bi bi-key"></i>
+                </div>
+                <h5 class="fw-bold">Account security</h5>
+                <p class="text-muted mb-0">
+                    Passwords are hashed, sessions use short-lived tokens, and a
+                    self-service "Forgot password" flow is built in.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="text-center text-muted small py-4 border-top bg-white">
+    <p class="mb-0">&copy; 2026 IT Health Management System. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
