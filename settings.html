@@ -18,7 +18,7 @@
         <!-- Sidebar -->
         <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 sidebar d-none d-md-block">
             <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
-                <a href="#" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                <a href="home.html" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
                     <i class="bi bi-heart-pulse fs-4 me-2"></i>
                     <span class="fs-5 fw-bold">HealthSys</span>
                 </a>
@@ -43,6 +43,11 @@
                             <i class="bi bi-file-medical"></i> <span class="ms-1 d-none d-sm-inline">Records</span>
                         </a>
                     </li>
+                    <li class="w-100 d-none" id="navUsersLink">
+                        <a href="users.html" class="nav-link align-middle">
+                            <i class="bi bi-people"></i> <span class="ms-1 d-none d-sm-inline">User Management</span>
+                        </a>
+                    </li>
                     <li class="w-100">
                         <a href="settings.html" class="nav-link active align-middle">
                             <i class="bi bi-gear"></i> <span class="ms-1 d-none d-sm-inline">Settings</span>
@@ -63,12 +68,9 @@
                     <p class="text-muted mb-0">Manage your account details and password.</p>
                 </div>
                 <div class="d-flex gap-3">
-                    <button class="btn btn-outline-secondary position-relative">
+                    <a href="index.html" class="btn btn-outline-secondary position-relative">
                         <i class="bi bi-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            3
-                        </span>
-                    </button>
+                    </a>
                     <div class="dropdown">
                         <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle me-1"></i> Profile
@@ -165,6 +167,9 @@
 <script src="js/auth.js"></script>
 <script>
 const currentUser = Auth.requireAuth();
+if (currentUser && currentUser.role === 'admin') {
+    document.getElementById('navUsersLink').classList.remove('d-none');
+}
 
 document.getElementById('logoutLink').addEventListener('click', function (e) {
     e.preventDefault();
