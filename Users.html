@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Health Management Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row flex-nowrap">
+
+        <!-- Sidebar -->
+        <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 sidebar d-none d-md-block">
+            <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
+                <a href="home.html" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                    <i class="bi bi-heart-pulse fs-4 me-2"></i>
+                    <span class="fs-5 fw-bold">HealthSys</span>
+                </a>
+                <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start w-100" id="menu">
+                    <li class="nav-item w-100">
+                        <a href="index.html" class="nav-link align-middle">
+                            <i class="bi bi-grid"></i> <span class="ms-1 d-none d-sm-inline">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="w-100">
+                        <a href="appointments.html" class="nav-link align-middle">
+                            <i class="bi bi-calendar-check"></i> <span class="ms-1 d-none d-sm-inline">Appointments</span>
+                        </a>
+                    </li>
+                    <li class="w-100">
+                        <a href="doctors.html" class="nav-link align-middle">
+                            <i class="bi bi-file-medical"></i> <span class="ms-1 d-none d-sm-inline">Doctors</span>
+                        </a>
+                    </li>
+                    <li class="w-100">
+                        <a href="records.html" class="nav-link align-middle">
+                            <i class="bi bi-file-medical"></i> <span class="ms-1 d-none d-sm-inline">Records</span>
+                        </a>
+                    </li>
+                    <li class="w-100" id="navUsers">
+                        <a href="users.html" class="nav-link active align-middle">
+                            <i class="bi bi-people"></i> <span class="ms-1 d-none d-sm-inline">User Management</span>
+                        </a>
+                    </li>
+                    <li class="w-100">
+                        <a href="settings.html" class="nav-link align-middle">
+                            <i class="bi bi-gear"></i> <span class="ms-1 d-none d-sm-inline">Settings</span>
+                        </a>
+                    </li>
+                </ul>
+                <hr>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col py-3">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="fw-bold text-dark">Account &amp; User Management</h3>
+                    <p class="text-muted mb-0">Admin only: view every account, change roles, or create staff logins.</p>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle me-1"></i> Profile
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="settings.html">My Account</a></li>
+                        <li><a class="dropdown-item" href="#" id="logoutLink">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="pageAlert" class="alert d-none" role="alert"></div>
+
+            <!-- Create staff account -->
+            <div class="card main-card mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-person-plus me-2 text-primary"></i>Create Staff Account</h5>
+                </div>
+                <div class="card-body">
+                    <div id="createAlert" class="alert d-none" role="alert"></div>
+                    <form id="createStaffForm" class="row g-3">
+                        <div class="col-12 col-md-3">
+                            <label class="form-label fw-semibold">Full Name</label>
+                            <input type="text" class="form-control" id="staffName" required>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="email" class="form-control" id="staffEmail" required>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label fw-semibold">Temporary Password</label>
+                            <input type="password" class="form-control" id="staffPassword" minlength="8" required>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <label class="form-label fw-semibold">Role</label>
+                            <select class="form-select" id="staffRole">
+                                <option value="doctor">Doctor</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Users table -->
+            <div class="card main-card">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-people me-2 text-primary"></i>All Accounts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr><td colspan="6" class="text-center text-muted py-4">Loading users...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="mt-5 mb-3 text-center text-muted small">
+                <p>&copy; 2026 IT Health Management System. All rights reserved.</p>
+            </footer>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/auth.js"></script>
+<script>
+const currentUser = Auth.requireAuth();
+
+// This page is admin-only. The server enforces this on every /api/auth/users*
+// call regardless, but we also gate the page itself so a non-admin who
+// stumbles onto the URL immediately gets sent back rather than seeing a
+// page full of failed requests.
+if (currentUser && currentUser.role !== 'admin') {
+    window.location.href = 'index.html';
+}
+
+document.getElementById('logoutLink').addEventListener('click', function (e) {
+    e.preventDefault();
+    Auth.logout();
+});
+
+function showAlert(boxId, message, type) {
+    const box = document.getElementById(boxId);
+    box.textContent = message;
+    box.className = `alert alert-${type}`;
+}
+
+function formatDate(iso) {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+}
+
+const roleBadge = { admin: 'bg-danger', doctor: 'bg-primary', patient: 'bg-secondary' };
+
+async function loadUsers() {
+    const tbody = document.getElementById('usersTableBody');
+    try {
+        const res = await Auth.apiFetch('/api/auth/users');
+        const users = res.data;
+
+        if (users.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No users found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = users.map((u, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td class="fw-semibold">${Auth.escapeHtml(u.full_name)}</td>
+                <td>${Auth.escapeHtml(u.email)}</td>
+                <td>
+                    <select class="form-select form-select-sm role-select" data-id="${u.id}" ${u.id === currentUser.id ? 'disabled' : ''} style="min-width:120px;">
+                        <option value="patient" ${u.role === 'patient' ? 'selected' : ''}>Patient</option>
+                        <option value="doctor" ${u.role === 'doctor' ? 'selected' : ''}>Doctor</option>
+                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                    </select>
+                </td>
+                <td>${formatDate(u.created_at)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" ${u.id === currentUser.id ? 'disabled' : ''} onclick="deleteUser(${u.id})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        document.querySelectorAll('.role-select').forEach((select) => {
+            select.addEventListener('change', () => updateRole(select.dataset.id, select.value));
+        });
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${Auth.escapeHtml(err.message)}</td></tr>`;
+    }
+}
+
+async function updateRole(id, role) {
+    try {
+        await Auth.apiFetch(`/api/auth/users/${id}/role`, {
+            method: 'PATCH',
+            body: JSON.stringify({ role }),
+        });
+        showAlert('pageAlert', 'Role updated.', 'success');
+    } catch (err) {
+        showAlert('pageAlert', err.message, 'danger');
+        loadUsers();
+    }
+}
+
+async function deleteUser(id) {
+    if (!confirm('Delete this account? This cannot be undone.')) return;
+    try {
+        await Auth.apiFetch(`/api/auth/users/${id}`, { method: 'DELETE' });
+        showAlert('pageAlert', 'User deleted.', 'success');
+        loadUsers();
+    } catch (err) {
+        showAlert('pageAlert', err.message, 'danger');
+    }
+}
+
+document.getElementById('createStaffForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errorBox = document.getElementById('createAlert');
+    errorBox.classList.add('d-none');
+
+    try {
+        await Auth.apiFetch('/api/auth/register-staff', {
+            method: 'POST',
+            body: JSON.stringify({
+                full_name: document.getElementById('staffName').value,
+                email: document.getElementById('staffEmail').value,
+                password: document.getElementById('staffPassword').value,
+                role: document.getElementById('staffRole').value,
+            }),
+        });
+        showAlert('createAlert', 'Staff account created.', 'success');
+        document.getElementById('createStaffForm').reset();
+        loadUsers();
+    } catch (err) {
+        showAlert('createAlert', err.message, 'danger');
+    }
+});
+
+loadUsers();
+</script>
+
+</body>
+</html>
