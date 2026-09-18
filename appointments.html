@@ -18,7 +18,7 @@
         <!-- Sidebar -->
         <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 sidebar d-none d-md-block">
             <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
-                <a href="#" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                <a href="home.html" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
                     <i class="bi bi-heart-pulse fs-4 me-2"></i>
                     <span class="fs-5 fw-bold">HealthSys</span>
                 </a>
@@ -43,6 +43,11 @@
                             <i class="bi bi-file-medical"></i> <span class="ms-1 d-none d-sm-inline">Records</span>
                         </a>
                     </li>
+                    <li class="w-100 d-none" id="navUsersLink">
+                        <a href="users.html" class="nav-link align-middle">
+                            <i class="bi bi-people"></i> <span class="ms-1 d-none d-sm-inline">User Management</span>
+                        </a>
+                    </li>
                     <li class="w-100">
                         <a href="settings.html" class="nav-link align-middle">
                             <i class="bi bi-gear"></i> <span class="ms-1 d-none d-sm-inline">Settings</span>
@@ -63,18 +68,15 @@
                     <p class="text-muted mb-0">Here's your health overview for today.</p>
                 </div>
                 <div class="d-flex gap-3">
-                    <button class="btn btn-outline-secondary position-relative">
+                    <a href="index.html" class="btn btn-outline-secondary position-relative">
                         <i class="bi bi-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            3
-                        </span>
-                    </button>
+                    </a>
                     <div class="dropdown">
                         <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle me-1"></i> Profile
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">My Account</a></li>
+                            <li><a class="dropdown-item" href="settings.html">My Account</a></li>
                             <li><a class="dropdown-item" href="#" id="logoutLink">Logout</a></li>
                         </ul>
                     </div>
@@ -182,7 +184,16 @@
 <script>
 const currentUser = Auth.requireAuth();
 if (currentUser) {
-    document.getElementById('welcomeHeading').textContent = `Welcome back, ${currentUser.full_name}! 👋`;
+    document.getElementById('welcomeHeading').textContent = `Welcome back, ${Auth.escapeHtml(currentUser.full_name)}! 👋`;
+    if (currentUser.role === 'admin') {
+        document.getElementById('navUsersLink').classList.remove('d-none');
+    }
+    // Only patients are allowed to book new appointments (enforced by the
+    // server too) -- hide the button for doctor/admin logins instead of
+    // letting them hit a 403 after filling in the form.
+    if (currentUser.role !== 'patient') {
+        document.querySelector('[data-bs-target="#bookModal"]').classList.add('d-none');
+    }
 }
 document.getElementById('logoutLink').addEventListener('click', function (e) {
     e.preventDefault();
@@ -216,11 +227,11 @@ async function loadAppointments() {
         tbody.innerHTML = appts.map((a, i) => `
             <tr>
                 <td>${i + 1}</td>
-                <td class="fw-semibold">${a.doctor_name}</td>
-                <td>${a.specialty || '-'}</td>
+                <td class="fw-semibold">${Auth.escapeHtml(a.doctor_name)}</td>
+                <td>${Auth.escapeHtml(a.specialty) || '-'}</td>
                 <td>${formatDate(a.appointment_date)}</td>
-                <td>${a.appointment_time}</td>
-                <td>${a.notes || '-'}</td>
+                <td>${Auth.escapeHtml(a.appointment_time)}</td>
+                <td>${Auth.escapeHtml(a.notes) || '-'}</td>
                 <td><span class="badge ${statusBadge[a.status] || 'bg-secondary'}">${a.status}</span></td>
                 <td>
                     ${a.status === 'pending' || a.status === 'confirmed'
@@ -230,7 +241,7 @@ async function loadAppointments() {
             </tr>
         `).join('');
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">${Auth.escapeHtml(err.message)}</td></tr>`;
     }
 }
 
@@ -258,7 +269,7 @@ async function loadDoctorsIntoSelect() {
     const select = document.getElementById('bookDoctor');
     try {
         const res = await Auth.apiFetch('/api/doctors');
-        select.innerHTML = res.data.map(d => `<option value="${d.id}">${d.name} (${d.specialty || 'General'})</option>`).join('');
+        select.innerHTML = res.data.map(d => `<option value="${d.id}">${Auth.escapeHtml(d.name)} (${Auth.escapeHtml(d.specialty) || 'General'})</option>`).join('');
 
         // Pre-select doctor if we arrived here via a "Book" link from doctors.html
         const params = new URLSearchParams(window.location.search);
