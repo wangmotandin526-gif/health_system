@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
@@ -8,7 +9,14 @@ const requireRole = require('../middleware/roles');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
-const { validateRegister, validateLogin, validateProfileUpdate, validatePasswordChange } = require('../middleware/validators');
+const {
+  validateRegister,
+  validateLogin,
+  validateProfileUpdate,
+  validatePasswordChange,
+  validateForgotPassword,
+  validateResetPassword,
+} = require('../middleware/validators');
 
 const router = express.Router();
 
@@ -19,6 +27,23 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
   message: { success: false, message: 'Too many login attempts. Please try again later.' },
 });
+
+// Same idea as loginLimiter: without this, someone could hammer
+// /forgot-password to enumerate which emails are registered, or to spam
+// the "reset link" generation endpoint.
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'test' ? 1000 : 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many password reset requests. Please try again later.' },
+});
+
+const RESET_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 router.post(
   '/register',
@@ -179,6 +204,151 @@ router.post(
     await db.query('UPDATE users SET password = ? WHERE id = ?', [hashed, req.user.id]);
     logger.info(`User ${req.user.id} changed their password`);
     res.json({ success: true, message: 'Password changed successfully' });
+  })
+);
+
+// --- Forgot / reset password -------------------------------------------
+//
+// There is no email service wired up in this project, so instead of
+// emailing a reset link we hand the (one-time, 30-minute) token straight
+// back in the API response and the frontend displays it on screen. In a
+// real deployment, replace the "return the token" step with actually
+// emailing resetUrl to the user and stop returning the token in the
+// response body.
+router.post(
+  '/forgot-password',
+  forgotPasswordLimiter,
+  validateForgotPassword,
+  asyncHandler(async (req, res) => {
+    const normalizedEmail = req.body.email.trim().toLowerCase();
+    const [users] = await db.query('SELECT id FROM users WHERE email = ?', [normalizedEmail]);
+
+    // Always return the same response whether or not the email exists,
+    // so this endpoint can't be used to find out who has an account.
+    const genericResponse = {
+      success: true,
+      message: 'If that email is registered, a password reset token has been generated.',
+    };
+
+    if (users.length === 0) {
+      logger.warn(`Password reset requested for unknown email from ${req.ip}`);
+      return res.json(genericResponse);
+    }
+
+    const userId = users[0].id;
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = hashToken(token);
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString();
+
+    await db.query(
+      'INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
+      [userId, tokenHash, expiresAt]
+    );
+
+    logger.info(`Password reset token issued for user ${userId}`);
+    res.json({
+      ...genericResponse,
+      // Demo-only: a real app emails this token/link instead of returning it.
+      data: { resetToken: token, expiresAt },
+    });
+  })
+);
+
+router.post(
+  '/reset-password',
+  forgotPasswordLimiter,
+  validateResetPassword,
+  asyncHandler(async (req, res) => {
+    const { token, new_password } = req.body;
+    const tokenHash = hashToken(token);
+
+    const [rows] = await db.query(
+      'SELECT * FROM password_resets WHERE token_hash = ? AND used = 0',
+      [tokenHash]
+    );
+    if (rows.length === 0) {
+      throw new AppError('This reset token is invalid or has already been used', 400);
+    }
+
+    const resetRecord = rows[0];
+    if (new Date(resetRecord.expires_at).getTime() < Date.now()) {
+      throw new AppError('This reset token has expired. Please request a new one.', 400);
+    }
+
+    const hashed = await bcrypt.hash(new_password, 10);
+    await db.query('UPDATE users SET password = ? WHERE id = ?', [hashed, resetRecord.user_id]);
+    await db.query('UPDATE password_resets SET used = 1 WHERE id = ?', [resetRecord.id]);
+
+    logger.info(`User ${resetRecord.user_id} reset their password via token`);
+    res.json({ success: true, message: 'Password reset successfully. You can now log in.' });
+  })
+);
+
+// --- Admin: account / user management -----------------------------------
+
+router.get(
+  '/users',
+  verifyToken,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const [rows] = await db.query(
+      'SELECT id, full_name, email, role, created_at FROM users ORDER BY created_at DESC'
+    );
+    res.json({ success: true, data: rows });
+  })
+);
+
+router.patch(
+  '/users/:id/role',
+  verifyToken,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const allowedRoles = ['patient', 'doctor', 'admin'];
+    const { role } = req.body || {};
+    if (!role || !allowedRoles.includes(role)) {
+      throw new AppError(`role must be one of: ${allowedRoles.join(', ')}`, 400);
+    }
+
+    const targetId = Number(req.params.id);
+    if (targetId === req.user.id) {
+      throw new AppError('You cannot change your own role', 400);
+    }
+
+    const [existing] = await db.query('SELECT id FROM users WHERE id = ?', [targetId]);
+    if (existing.length === 0) throw new AppError('User not found', 404);
+
+    await db.query('UPDATE users SET role = ? WHERE id = ?', [role, targetId]);
+    logger.info(`Admin ${req.user.id} set user ${targetId}'s role to ${role}`);
+    res.json({ success: true, message: 'Role updated' });
+  })
+);
+
+router.delete(
+  '/users/:id',
+  verifyToken,
+  requireRole('admin'),
+  asyncHandler(async (req, res) => {
+    const targetId = Number(req.params.id);
+    if (targetId === req.user.id) {
+      throw new AppError('You cannot delete your own account', 400);
+    }
+
+    const [existing] = await db.query('SELECT id FROM users WHERE id = ?', [targetId]);
+    if (existing.length === 0) throw new AppError('User not found', 404);
+
+    try {
+      await db.query('DELETE FROM users WHERE id = ?', [targetId]);
+    } catch (err) {
+      // Foreign key constraint (they have appointments/records/a doctor
+      // profile linked to them) -- deleting would orphan that data.
+      throw new AppError(
+        'This user has linked appointments, records, or a doctor profile and cannot be deleted. Consider changing their role instead.',
+        409
+      );
+    }
+
+    logger.info(`Admin ${req.user.id} deleted user ${targetId}`);
+    res.json({ success: true, message: 'User deleted' });
   })
 );
 
