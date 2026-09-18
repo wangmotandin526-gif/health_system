@@ -1,6 +1,16 @@
-const API_BASE = 'https://health-system-sosd.onrender.com'; 
+const API_BASE = 'https://health-system-sosd.onrender.com';
 
 const Auth = {
+  escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  },
+
   saveSession(token, user) {
     sessionStorage.setItem('token', token);
     sessionStorage.setItem('user', JSON.stringify(user));
