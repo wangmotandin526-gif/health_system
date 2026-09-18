@@ -1,4 +1,4 @@
-const API_BASE = 'https://health-system-sosd.onrender.com';
+const API_BASE = '';
 
 const Auth = {
   escapeHtml(value) {
