@@ -55,6 +55,11 @@ const Auth = {
     }
 
     if (res.status === 401 && token) {
+      // We sent a session token and the server rejected it -- that's an
+      // expired/invalid session. A 401 with NO token (e.g. the login
+      // request itself, which never had a token to send) just means
+      // "wrong email or password" and should fall through to show the
+      // server's own error message instead of silently redirecting.
       this.logout();
       throw new Error('Session expired, please log in again.');
     }
