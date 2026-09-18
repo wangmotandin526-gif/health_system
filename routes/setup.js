@@ -38,8 +38,8 @@ router.get(
 
     const [existingAdmins] = await db.query("SELECT id FROM users WHERE role = 'admin'");
     if (existingAdmins.length === 0) {
-      const adminEmail = process.env.SETUP_ADMIN_EMAIL || 'admin@healthsys.test';
-      const adminPassword = process.env.SETUP_ADMIN_PASSWORD || 'ChangeThisPassword123!';
+      const adminEmail = process.env.SETUP_ADMIN_EMAIL || 'admin@admin.com';
+      const adminPassword = process.env.SETUP_ADMIN_PASSWORD || 'Admin123!';
       const hashed = await bcrypt.hash(adminPassword, 10);
       await db.query(
         'INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
