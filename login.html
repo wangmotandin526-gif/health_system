@@ -40,129 +40,165 @@
 
                 </div>
 
-                <!-- Login Heading -->
-                <div class="mb-4">
-                    <h4 class="fw-bold">
-                        Welcome Back
-                    </h4>
+                <!-- ===================== STEP 1: Choose account type ===================== -->
+                <div id="roleChooser">
 
-                    <p class="text-muted mb-0">
-                        Please login to access your account.
-                    </p>
+                    <div class="mb-4 text-center">
+                        <h4 class="fw-bold">Login as</h4>
+                        <p class="text-muted mb-0">Choose how you'd like to sign in.</p>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <button type="button" class="btn btn-outline-primary w-100 py-4 role-choice-btn" data-role="client">
+                                <i class="bi bi-person fs-2 d-block mb-2"></i>
+                                <span class="fw-semibold">Client</span>
+                                <div class="small text-muted mt-1">Patients &amp; doctors</div>
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="button" class="btn btn-outline-primary w-100 py-4 role-choice-btn" data-role="admin">
+                                <i class="bi bi-shield-lock fs-2 d-block mb-2"></i>
+                                <span class="fw-semibold">Admin</span>
+                                <div class="small text-muted mt-1">Staff &amp; management</div>
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
 
-                <!-- Login error message -->
-                <div id="loginError" class="alert alert-danger d-none" role="alert"></div>
+                <!-- ===================== STEP 2: Login form ===================== -->
+                <div id="loginStep" class="d-none">
 
-                <!-- Login Form -->
-                <form id="loginForm">
+                    <button type="button" id="backToChooser" class="btn btn-sm btn-link ps-0 mb-2 text-decoration-none">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
 
-                    <!-- Email -->
-                    <div class="mb-3">
+                    <div class="mb-4">
+                        <h4 class="fw-bold" id="loginHeading">
+                            Welcome Back
+                        </h4>
 
-                        <label class="form-label fw-semibold">
-                            Email Address
-                        </label>
-
-                        <div class="input-group">
-
-                            <span class="input-group-text">
-                                <i class="bi bi-envelope"></i>
-                            </span>
-
-                            <input
-                                type="email"
-                                id="email"
-                                class="form-control"
-                                placeholder="Enter your email"
-                                required
-                            >
-
-                        </div>
-
+                        <p class="text-muted mb-0" id="loginSubheading">
+                            Please login to access your account.
+                        </p>
                     </div>
 
-                    <!-- Password -->
-                    <div class="mb-3">
+                    <!-- Login error message -->
+                    <div id="loginError" class="alert alert-danger d-none" role="alert"></div>
 
-                        <label class="form-label fw-semibold">
-                            Password
-                        </label>
+                    <!-- Login Form -->
+                    <form id="loginForm">
 
-                        <div class="input-group">
+                        <!-- Email -->
+                        <div class="mb-3">
 
-                            <span class="input-group-text">
-                                <i class="bi bi-lock"></i>
-                            </span>
-
-                            <input
-                                type="password"
-                                id="password"
-                                class="form-control"
-                                placeholder="Enter your password"
-                                required
-                            >
-
-                        </div>
-
-                    </div>
-
-                    <!-- Remember / Forgot Password -->
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-
-                        <div class="form-check">
-
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                id="remember"
-                            >
-
-                            <label
-                                class="form-check-label"
-                                for="remember"
-                            >
-                                Remember me
+                            <label class="form-label fw-semibold">
+                                Email Address
                             </label>
 
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+                                    <i class="bi bi-envelope"></i>
+                                </span>
+
+                                <input
+                                    type="email"
+                                    id="email"
+                                    class="form-control"
+                                    placeholder="Enter your email"
+                                    required
+                                >
+
+                            </div>
+
                         </div>
 
-                        <a href="forgot-password.html" class="forgot-link">
-                            Forgot Password?
-                        </a>
+                        <!-- Password -->
+                        <div class="mb-3">
 
+                            <label class="form-label fw-semibold">
+                                Password
+                            </label>
+
+                            <div class="input-group">
+
+                                <span class="input-group-text">
+                                    <i class="bi bi-lock"></i>
+                                </span>
+
+                                <input
+                                    type="password"
+                                    id="password"
+                                    class="form-control"
+                                    placeholder="Enter your password"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+                        <!-- Remember / Forgot Password -->
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+
+                            <div class="form-check">
+
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    id="remember"
+                                >
+
+                                <label
+                                    class="form-check-label"
+                                    for="remember"
+                                >
+                                    Remember me
+                                </label>
+
+                            </div>
+
+                            <a href="forgot-password.html" class="forgot-link">
+                                Forgot Password?
+                            </a>
+
+                        </div>
+
+                        <!-- Login Button -->
+                        <div class="d-grid">
+
+                            <button
+                                type="submit"
+                                id="loginBtn"
+                                class="btn btn-primary login-btn"
+                            >
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                Login
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                    <!-- Client-only: create account -->
+                    <div class="text-center mt-4 d-none" id="clientOnlyLinks">
+                        <p class="text-muted mb-0">
+                            Don't have an account?
+                            <a href="register.html" class="text-decoration-none fw-semibold">
+                                Create Account
+                            </a>
+                        </p>
                     </div>
 
-                    <!-- Login Button -->
-                    <div class="d-grid">
-
-                        <button
-                            type="submit"
-                            id="loginBtn"
-                            class="btn btn-primary login-btn"
-                        >
-                            <i class="bi bi-box-arrow-in-right me-2"></i>
-                            Login
-                        </button>
-
+                    <!-- Admin-only: first-time setup -->
+                    <div class="text-center mt-4 d-none" id="adminOnlyLinks">
+                        <p class="text-muted small mb-0">
+                            No admin account yet?
+                            <a href="setup.html" class="text-decoration-none">Run first-time setup</a>
+                        </p>
                     </div>
-
-                </form>
-
-                <!-- Register -->
-                <div class="text-center mt-4">
-
-                    <p class="text-muted mb-0">
-                        Don't have an account?
-                        <a href="register.html" class="text-decoration-none fw-semibold">
-                            Create Account
-                        </a>
-                    </p>
-
-                    <p class="text-muted small mt-2 mb-0">
-                        Setting this up for the first time?
-                        <a href="setup.html" class="text-decoration-none">Run first-time setup</a>
-                    </p>
 
                 </div>
 
@@ -176,15 +212,55 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/auth.js"></script>
 <script>
+let selectedRole = null; // 'client' or 'admin'
+
+const roleChooser = document.getElementById('roleChooser');
+const loginStep = document.getElementById('loginStep');
+const loginHeading = document.getElementById('loginHeading');
+const loginSubheading = document.getElementById('loginSubheading');
+const clientOnlyLinks = document.getElementById('clientOnlyLinks');
+const adminOnlyLinks = document.getElementById('adminOnlyLinks');
+const loginError = document.getElementById('loginError');
+
+document.querySelectorAll('.role-choice-btn').forEach((btn) => {
+    btn.addEventListener('click', function () {
+        selectedRole = this.dataset.role;
+
+        roleChooser.classList.add('d-none');
+        loginStep.classList.remove('d-none');
+        loginError.classList.add('d-none');
+        document.getElementById('loginForm').reset();
+
+        if (selectedRole === 'admin') {
+            loginHeading.textContent = 'Admin Login';
+            loginSubheading.textContent = 'Log in with your admin credentials.';
+            adminOnlyLinks.classList.remove('d-none');
+            clientOnlyLinks.classList.add('d-none');
+        } else {
+            loginHeading.textContent = 'Welcome Back';
+            loginSubheading.textContent = 'Please login to access your account.';
+            clientOnlyLinks.classList.remove('d-none');
+            adminOnlyLinks.classList.add('d-none');
+        }
+
+        document.getElementById('email').focus();
+    });
+});
+
+document.getElementById('backToChooser').addEventListener('click', function () {
+    loginStep.classList.add('d-none');
+    roleChooser.classList.remove('d-none');
+    selectedRole = null;
+});
+
 document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    const errorBox = document.getElementById('loginError');
     const btn = document.getElementById('loginBtn');
 
-    errorBox.classList.add('d-none');
+    loginError.classList.add('d-none');
     btn.disabled = true;
     btn.textContent = 'Logging in...';
 
@@ -195,11 +271,22 @@ document.getElementById('loginForm').addEventListener('submit', async function (
         });
 
         // res.data = { token, user: { id, full_name, role } }
-        Auth.saveSession(res.data.token, res.data.user);
+        const { token, user } = res.data;
+        const isAdminAccount = user.role === 'admin';
+
+        // Enforce that the account actually matches what they picked.
+        if (selectedRole === 'admin' && !isAdminAccount) {
+            throw new Error('This account is not an admin account. Choose "Client" instead, or log in with an admin account.');
+        }
+        if (selectedRole === 'client' && isAdminAccount) {
+            throw new Error('This is an admin account. Choose "Admin" instead.');
+        }
+
+        Auth.saveSession(token, user);
         window.location.href = 'index.html';
     } catch (err) {
-        errorBox.textContent = err.message;
-        errorBox.classList.remove('d-none');
+        loginError.textContent = err.message;
+        loginError.classList.remove('d-none');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Login';
