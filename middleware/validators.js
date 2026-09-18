@@ -179,6 +179,29 @@ function validateProfileUpdate(req, res, next) {
   next();
 }
 
+function validateForgotPassword(req, res, next) {
+  const { email } = req.body || {};
+  if (!email || typeof email !== 'string' || !EMAIL_RE.test(email.trim())) {
+    return fail(res, ['a valid email is required']);
+  }
+  next();
+}
+
+function validateResetPassword(req, res, next) {
+  const { token, new_password } = req.body || {};
+  const errors = [];
+  if (!token || typeof token !== 'string' || token.trim().length < 20) {
+    errors.push('a valid reset token is required');
+  }
+  if (!new_password || typeof new_password !== 'string' || new_password.length < 8) {
+    errors.push('new_password must be at least 8 characters');
+  } else if (new_password.length > MAX_PASSWORD_LENGTH) {
+    errors.push(`new_password must not exceed ${MAX_PASSWORD_LENGTH} characters`);
+  }
+  if (errors.length) return fail(res, errors);
+  next();
+}
+
 function validatePasswordChange(req, res, next) {
   const { current_password, new_password } = req.body || {};
   const errors = [];
@@ -205,4 +228,6 @@ module.exports = {
   validateRecord,
   validateProfileUpdate,
   validatePasswordChange,
+  validateForgotPassword,
+  validateResetPassword,
 };
