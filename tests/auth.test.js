@@ -90,6 +90,7 @@ describe('POST /api/auth/login', () => {
     const res = await request(app)
       .post('/api/auth/login')
       .send({ email: 'nope@example.com', password: 'password123' });
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(404);
+    expect(res.body.message).toMatch(/not registered/i);
   });
 });
