@@ -15,7 +15,7 @@
 
         <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 sidebar d-none d-md-block">
             <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
-                <a href="#" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                <a href="home.html" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
                     <i class="bi bi-heart-pulse fs-4 me-2"></i>
                     <span class="fs-5 fw-bold">HealthSys</span>
                 </a>
@@ -38,6 +38,11 @@
                     <li class="w-100">
                         <a href="records.html" class="nav-link align-middle">
                             <i class="bi bi-file-medical"></i> <span class="ms-1 d-none d-sm-inline">Records</span>
+                        </a>
+                    </li>
+                    <li class="w-100 d-none" id="navUsersLink">
+                        <a href="users.html" class="nav-link align-middle">
+                            <i class="bi bi-people"></i> <span class="ms-1 d-none d-sm-inline">User Management</span>
                         </a>
                     </li>
                     <li class="w-100">
@@ -248,6 +253,9 @@ const currentUser = Auth.requireAuth(); // redirects to login.html if not logged
 if (currentUser) {
     document.getElementById('welcomeHeading').textContent = `Welcome back, ${currentUser.full_name}! 👋`;
     document.getElementById('profileName').textContent = `${currentUser.full_name} (${currentUser.role})`;
+    if (currentUser.role === 'admin') {
+        document.getElementById('navUsersLink').classList.remove('d-none');
+    }
 }
 document.getElementById('logoutLink').addEventListener('click', function (e) {
     e.preventDefault();
@@ -305,10 +313,10 @@ async function loadAppointments() {
         } else {
             tbody.innerHTML = rows.map(a => `
                 <tr>
-                    <td class="fw-semibold">${a.doctor_name}</td>
-                    <td>${a.specialty || '-'}</td>
-                    <td>${formatDate(a.appointment_date)} <br><small class="text-muted">${a.appointment_time}</small></td>
-                    <td><span class="badge ${statusBadge[a.status] || 'bg-secondary'}">${a.status}</span></td>
+                    <td class="fw-semibold">${Auth.escapeHtml(a.doctor_name)}</td>
+                    <td>${Auth.escapeHtml(a.specialty) || '-'}</td>
+                    <td>${formatDate(a.appointment_date)} <br><small class="text-muted">${Auth.escapeHtml(a.appointment_time)}</small></td>
+                    <td><span class="badge ${statusBadge[a.status] || 'bg-secondary'}">${Auth.escapeHtml(a.status)}</span></td>
                     <td><a href="appointments.html" class="btn btn-sm btn-outline-primary">View</a></td>
                 </tr>
             `).join('');
@@ -332,7 +340,7 @@ function renderNotifications(future) {
 
     const items = future.slice(0, 5).map(a => ({
         title: 'Appointment Reminder',
-        body: `${a.status === 'pending' ? 'Pending' : 'Confirmed'} visit with ${a.doctor_name} on ${formatDate(a.appointment_date)} at ${a.appointment_time}.`,
+        body: `${a.status === 'pending' ? 'Pending' : 'Confirmed'} visit with ${Auth.escapeHtml(a.doctor_name)} on ${formatDate(a.appointment_date)} at ${Auth.escapeHtml(a.appointment_time)}.`,
     }));
 
     if (items.length === 0) {
@@ -396,8 +404,8 @@ async function loadRecords() {
                         <i class="bi ${icons[i % icons.length].icon}"></i>
                     </div>
                     <div>
-                        <h6 class="mb-0 fw-bold">${r.diagnosis || 'Visit record'}</h6>
-                        <small class="text-muted">${formatDate(r.visit_date)} &bull; ${r.doctor_name || 'Unassigned'}</small>
+                        <h6 class="mb-0 fw-bold">${Auth.escapeHtml(r.diagnosis) || 'Visit record'}</h6>
+                        <small class="text-muted">${formatDate(r.visit_date)} &bull; ${Auth.escapeHtml(r.doctor_name) || 'Unassigned'}</small>
                     </div>
                     <button class="ms-auto btn btn-sm btn-light" onclick="viewRecord(${r.id})"><i class="bi bi-eye"></i></button>
                 </div>
@@ -415,9 +423,9 @@ function viewRecord(id) {
     if (!r) return;
     document.getElementById('recordDetailBody').innerHTML = `
         <p><strong>Date:</strong> ${formatDate(r.visit_date)}</p>
-        <p><strong>Doctor:</strong> ${r.doctor_name || 'Unassigned'}</p>
-        <p><strong>Diagnosis:</strong> ${r.diagnosis || '-'}</p>
-        <p><strong>Prescription:</strong> ${r.prescription || '-'}</p>
+        <p><strong>Doctor:</strong> ${Auth.escapeHtml(r.doctor_name) || 'Unassigned'}</p>
+        <p><strong>Diagnosis:</strong> ${Auth.escapeHtml(r.diagnosis) || '-'}</p>
+        <p><strong>Prescription:</strong> ${Auth.escapeHtml(r.prescription) || '-'}</p>
     `;
     new bootstrap.Modal(document.getElementById('recordDetailModal')).show();
 }
