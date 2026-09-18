@@ -76,3 +76,45 @@ const Auth = {
     return body;
   },
 };
+
+// Adds a show/hide eye button to every password field on the page, so
+// the user can check what they typed before submitting. Works whether
+// the input already sits inside a Bootstrap .input-group (login,
+// register) or is a plain .form-control on its own (settings, reset
+// password, create-staff) -- it wraps it in an .input-group on the fly
+// if needed.
+function addPasswordToggles() {
+  document.querySelectorAll('input[type="password"]').forEach((input) => {
+    if (input.dataset.toggleAdded) return;
+    input.dataset.toggleAdded = 'true';
+
+    let group = input.parentElement;
+    if (!group || !group.classList.contains('input-group')) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'input-group';
+      input.parentNode.insertBefore(wrapper, input);
+      wrapper.appendChild(input);
+      group = wrapper;
+    }
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-outline-secondary';
+    btn.tabIndex = -1;
+    btn.setAttribute('aria-label', 'Show password');
+    btn.innerHTML = '<i class="bi bi-eye"></i>';
+
+    btn.addEventListener('click', function () {
+      const nowShowing = input.type === 'password';
+      input.type = nowShowing ? 'text' : 'password';
+      btn.innerHTML = nowShowing
+        ? '<i class="bi bi-eye-slash"></i>'
+        : '<i class="bi bi-eye"></i>';
+      btn.setAttribute('aria-label', nowShowing ? 'Hide password' : 'Show password');
+    });
+
+    group.appendChild(btn);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', addPasswordToggles);
