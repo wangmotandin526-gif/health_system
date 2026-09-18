@@ -58,4 +58,56 @@ router.get(
   })
 );
 
+
+router.get(
+  '/update-admin',
+  asyncHandler(async (req, res) => {
+    if (!process.env.SETUP_SECRET) {
+      throw new AppError('Setup is not enabled on this deployment (SETUP_SECRET is not set)', 403);
+    }
+    if (req.query.key !== process.env.SETUP_SECRET) {
+      throw new AppError('Invalid setup key', 403);
+    }
+
+    const newEmail = (req.query.email || '').trim().toLowerCase();
+    const newPassword = req.query.password || '';
+
+    if (!newEmail || !newEmail.includes('@')) {
+      throw new AppError('Provide a valid email, e.g. ...&email=you@example.com', 400);
+    }
+    if (newPassword.length < 8) {
+      throw new AppError('Password must be at least 8 characters', 400);
+    }
+
+    const [admins] = await db.query(
+      "SELECT id, email FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1"
+    );
+    if (admins.length === 0) {
+      throw new AppError('No admin account exists yet -- use /api/setup/init instead', 404);
+    }
+
+    const [emailTaken] = await db.query(
+      'SELECT id FROM users WHERE email = ? AND id != ?',
+      [newEmail, admins[0].id]
+    );
+    if (emailTaken.length > 0) {
+      throw new AppError('That email is already used by another account', 409);
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await db.query('UPDATE users SET email = ?, password = ? WHERE id = ?', [
+      newEmail,
+      hashed,
+      admins[0].id,
+    ]);
+
+    logger.info(`Admin account ${admins[0].id} email/password updated via /api/setup/update-admin`);
+    res.json({
+      success: true,
+      message: 'Admin email and password updated. Remove this route (or SETUP_SECRET) now that you are done.',
+      data: { adminId: admins[0].id, previousEmail: admins[0].email, newEmail },
+    });
+  })
+);
+
 module.exports = router;
