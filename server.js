@@ -51,18 +51,25 @@ app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
 
 const pages = [
+  'home.html',
   'index.html',
   'login.html',
   'register.html',
+  'forgot-password.html',
+  'reset-password.html',
   'appointments.html',
   'doctors.html',
   'records.html',
   'settings.html',
+  'users.html',
 ];
 pages.forEach((page) => {
   app.get(`/${page}`, (req, res) => res.sendFile(path.join(__dirname, page)));
 });
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+// The public landing page describing the system lives at "/". The
+// dashboard (index.html) requires login and is reached from there or
+// straight after signing in.
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'home.html')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
