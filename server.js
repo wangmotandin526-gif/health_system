@@ -62,6 +62,7 @@ const pages = [
   'records.html',
   'settings.html',
   'users.html',
+  'setup.html',
 ];
 pages.forEach((page) => {
   app.get(`/${page}`, (req, res) => res.sendFile(path.join(__dirname, page)));
