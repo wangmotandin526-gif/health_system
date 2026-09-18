@@ -58,7 +58,11 @@ router.get(
   })
 );
 
-
+// One-off helper for deployments where the admin account already exists
+// (so /init won't touch it) and there's no shell/DB access to fix it by
+// hand -- e.g. a live Render deployment. Protected by the same
+// SETUP_SECRET as /init. Remove this route (or unset SETUP_SECRET) again
+// once you've used it.
 router.get(
   '/update-admin',
   asyncHandler(async (req, res) => {
