@@ -18,7 +18,7 @@
         <!-- Sidebar -->
         <div class="col-auto col-md-3 col-xl-2 px-sm-2 px-0 sidebar d-none d-md-block">
             <div class="d-flex flex-column align-items-center align-items-sm-start px-3 pt-2 text-white min-vh-100">
-                <a href="#" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                <a href="home.html" class="d-flex align-items-center pb-3 mb-md-0 me-md-auto text-white text-decoration-none">
                     <i class="bi bi-heart-pulse fs-4 me-2"></i>
                     <span class="fs-5 fw-bold">HealthSys</span>
                 </a>
@@ -43,6 +43,11 @@
                             <i class="bi bi-file-medical"></i> <span class="ms-1 d-none d-sm-inline">Records</span>
                         </a>
                     </li>
+                    <li class="w-100 d-none" id="navUsersLink">
+                        <a href="users.html" class="nav-link align-middle">
+                            <i class="bi bi-people"></i> <span class="ms-1 d-none d-sm-inline">User Management</span>
+                        </a>
+                    </li>
                     <li class="w-100">
                         <a href="settings.html" class="nav-link align-middle">
                             <i class="bi bi-gear"></i> <span class="ms-1 d-none d-sm-inline">Settings</span>
@@ -63,19 +68,15 @@
                     <p class="text-muted mb-0">Here's your health overview for today.</p>
                 </div>
                 <div class="d-flex gap-3">
-                    <button class="btn btn-outline-secondary position-relative">
+                    <a href="index.html" class="btn btn-outline-secondary position-relative">
                         <i class="bi bi-bell"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            3
-                        </span>
-                    </button>
+                    </a>
                     <div class="dropdown">
-                        
                         <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle me-1"></i> Profile
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">My Account</a></li>
+                            <li><a class="dropdown-item" href="settings.html">My Account</a></li>
                             <li><a class="dropdown-item" href="#" id="logoutLink">Logout</a></li>
                         </ul>
                     </div>
@@ -96,6 +97,7 @@
                     <div style="max-width: 250px;">
                         <input type="text"
                                class="form-control"
+                               id="doctorSearch"
                                placeholder="Search doctor...">
                     </div>
 
@@ -147,37 +149,38 @@
 <script>
 const currentUser = Auth.requireAuth();
 if (currentUser) {
-    document.getElementById('welcomeHeading').textContent = `Welcome back, ${currentUser.full_name}! 👋`;
+    document.getElementById('welcomeHeading').textContent = `Welcome back, ${Auth.escapeHtml(currentUser.full_name)}! 👋`;
+    if (currentUser.role === 'admin') {
+        document.getElementById('navUsersLink').classList.remove('d-none');
+    }
 }
 document.getElementById('logoutLink').addEventListener('click', function (e) {
     e.preventDefault();
     Auth.logout();
 });
 
-async function loadDoctors() {
+let doctorsCache = [];
+
+function renderDoctors(doctors) {
     const tbody = document.getElementById('doctorsTableBody');
-    try {
-        const res = await Auth.apiFetch('/api/doctors');
-        const doctors = res.data;
+    if (doctors.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No doctors found.</td></tr>';
+        return;
+    }
 
-        if (doctors.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No doctors found.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = doctors.map((doc, i) => `
+    tbody.innerHTML = doctors.map((doc, i) => `
             <tr>
                 <td>${i + 1}</td>
                 <td>
                     <div class="d-flex align-items-center">
                         <img src="img/per.jfif" class="doctor-img me-3" alt="Doctor">
-                        <div><strong>${doc.name}</strong></div>
+                        <div><strong>${Auth.escapeHtml(doc.name)}</strong></div>
                     </div>
                 </td>
-                <td>${doc.specialty || '-'}</td>
-                <td>${doc.email || '-'}</td>
-                <td>${doc.phone || '-'}</td>
-                <td>${doc.available_days || '-'}</td>
+                <td>${Auth.escapeHtml(doc.specialty) || '-'}</td>
+                <td>${Auth.escapeHtml(doc.email) || '-'}</td>
+                <td>${Auth.escapeHtml(doc.phone) || '-'}</td>
+                <td>${Auth.escapeHtml(doc.available_days) || '-'}</td>
                 <td>
                     <a href="appointments.html?doctor_id=${doc.id}&doctor_name=${encodeURIComponent(doc.name)}"
                        class="btn btn-sm btn-primary">
@@ -186,10 +189,26 @@ async function loadDoctors() {
                 </td>
             </tr>
         `).join('');
+}
+
+async function loadDoctors() {
+    const tbody = document.getElementById('doctorsTableBody');
+    try {
+        const res = await Auth.apiFetch('/api/doctors');
+        doctorsCache = res.data;
+        renderDoctors(doctorsCache);
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${Auth.escapeHtml(err.message)}</td></tr>`;
     }
 }
+
+document.getElementById('doctorSearch').addEventListener('input', function () {
+    const q = this.value.trim().toLowerCase();
+    const filtered = doctorsCache.filter((d) =>
+        d.name.toLowerCase().includes(q) || (d.specialty || '').toLowerCase().includes(q)
+    );
+    renderDoctors(filtered);
+});
 
 loadDoctors();
 </script>
