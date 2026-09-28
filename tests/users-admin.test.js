@@ -1,6 +1,7 @@
 const request = require('supertest');
 const app = require('../server');
 const { createUser, createDoctor } = require('./helpers');
+const db = require('../config/db');
 
 let adminToken, adminId, patientToken, patientId;
 
@@ -166,5 +167,45 @@ describe('Forgot / reset password flow', () => {
     const res = await request(app).post('/api/auth/forgot-password').send({ email: 'ghost@example.com' });
     expect(res.status).toBe(200);
     expect(res.body.data).toBeUndefined();
+  });
+});
+
+describe('Passwords live in Firebase Authentication, not in Firestore', () => {
+  it('stores no password (or hash) on the Firestore user profile', async () => {
+    const id = await createUser({ full_name: 'No Hash', email: 'um-nohash@example.com', password: 'password123', role: 'patient' });
+    const profile = await db.get('users', id);
+    expect(profile).toMatchObject({ id, email: 'um-nohash@example.com', role: 'patient' });
+    expect(Object.keys(profile).join(',')).not.toMatch(/pass/i);
+  });
+
+  it('uses the Firebase account uid as the profile id, so login returns that id', async () => {
+    const id = await createUser({ full_name: 'Same Id', email: 'um-sameid@example.com', password: 'password123', role: 'patient' });
+    const res = await login('um-sameid@example.com');
+    expect(res.body.data.user.id).toBe(id);
+  });
+
+  it('lets a signed-in user change their own password (current password required)', async () => {
+    await createUser({ full_name: 'Self Change', email: 'um-self@example.com', password: 'password123', role: 'patient' });
+    const token = (await login('um-self@example.com')).body.data.token;
+
+    const wrong = await request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ current_password: 'not-my-password', new_password: 'updatedpass99' });
+    expect(wrong.status).toBe(401);
+
+    const ok = await request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ current_password: 'password123', new_password: 'updatedpass99' });
+    expect(ok.status).toBe(200);
+    expect((await login('um-self@example.com', 'updatedpass99')).status).toBe(200);
+    expect((await login('um-self@example.com', 'password123')).status).toBe(401);
+  });
+
+  it('removes the Firebase login when the account is deleted', async () => {
+    const id = await createUser({ full_name: 'Gone', email: 'um-gone@example.com', password: 'password123', role: 'patient' });
+    await request(app).delete(`/api/auth/users/${id}`).set('Authorization', `Bearer ${adminToken}`);
+    expect((await login('um-gone@example.com')).status).toBe(401);
   });
 });
