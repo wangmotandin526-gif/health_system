@@ -68,7 +68,7 @@ describe('POST /api/doctors', () => {
     const res = await request(app)
       .post('/api/doctors')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ name: 'Dr. Test', specialty: 'Cardiology', email: 'dr.test@example.com' });
+      .send({ name: 'Dr. Test', specialty: 'Cardiology', email: 'dr.test@example.com', available_days: 'Mon,Wed,Fri' });
     expect(res.status).toBe(201);
     expect(res.body.data.id).toBeDefined();
   });
@@ -81,7 +81,7 @@ describe('PUT /api/doctors/:id', () => {
     const res = await request(app)
       .post('/api/doctors')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ name: 'Dr. Update Me', specialty: 'General' });
+      .send({ name: 'Dr. Update Me', specialty: 'General', available_days: 'Mon-Fri' });
     doctorId = res.body.data.id;
   });
 
@@ -97,15 +97,33 @@ describe('PUT /api/doctors/:id', () => {
     const res = await request(app)
       .put(`/api/doctors/${doctorId}`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ name: 'Dr. Updated', specialty: 'Neurology' });
+      .send({ name: 'Dr. Updated', specialty: 'Neurology', available_days: 'Tue,Thu', available_from: '09:00', available_to: '15:00' });
     expect(res.status).toBe(200);
+
+    const list = await request(app).get('/api/doctors').set('Authorization', `Bearer ${adminToken}`);
+    const updated = list.body.data.find((d) => d.id === doctorId);
+    expect(updated).toMatchObject({
+      available_days: 'Tue,Thu',
+      available_weekdays: [2, 4],
+      available_from: '09:00',
+      available_to: '15:00',
+    });
+  });
+
+  it('will not let an admin blank out a doctor\'s available days', async () => {
+    const res = await request(app)
+      .put(`/api/doctors/${doctorId}`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ name: 'Dr. Updated', specialty: 'Neurology' });
+    expect(res.status).toBe(400);
+    expect(res.body.errors.join(' ')).toMatch(/available_days/);
   });
 
   it('returns 404 when updating a non-existent doctor', async () => {
     const res = await request(app)
       .put('/api/doctors/999999')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ name: 'Ghost Doctor' });
+      .send({ name: 'Ghost Doctor', available_days: 'Mon-Fri' });
     expect(res.status).toBe(404);
   });
 });
@@ -117,7 +135,7 @@ describe('DELETE /api/doctors/:id', () => {
     const res = await request(app)
       .post('/api/doctors')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ name: 'Dr. Delete Me' });
+      .send({ name: 'Dr. Delete Me', available_days: 'Mon-Fri' });
     doctorId = res.body.data.id;
   });
 
