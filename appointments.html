@@ -43,6 +43,11 @@
                             <i class="bi bi-file-medical"></i> <span class="ms-1 d-none d-sm-inline">Records</span>
                         </a>
                     </li>
+                    <li class="w-100">
+                        <a href="learning.html" class="nav-link align-middle">
+                            <i class="bi bi-book"></i> <span class="ms-1 d-none d-sm-inline">Learning</span>
+                        </a>
+                    </li>
                     <li class="w-100 d-none" id="navUsersLink">
                         <a href="users.html" class="nav-link align-middle">
                             <i class="bi bi-people"></i> <span class="ms-1 d-none d-sm-inline">User Management</span>
@@ -155,6 +160,7 @@
                         <select class="form-select" id="bookDoctor" required>
                             <option value="">Loading doctors...</option>
                         </select>
+                        <div class="form-text" id="bookDoctorDays"></div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Date</label>
@@ -163,6 +169,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Time</label>
                         <input type="time" class="form-control" id="bookTime" required>
+                        <div class="form-text text-danger" id="bookSlotWarning"></div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Notes (optional)</label>
@@ -171,7 +178,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Confirm Booking</button>
+                    <button type="submit" class="btn btn-primary" id="bookSubmitBtn">Confirm Booking</button>
                 </div>
             </form>
         </div>
@@ -235,7 +242,7 @@ async function loadAppointments() {
                 <td><span class="badge ${statusBadge[a.status] || 'bg-secondary'}">${a.status}</span></td>
                 <td>
                     ${a.status === 'pending' || a.status === 'confirmed'
-                        ? `<button class="btn btn-sm btn-outline-danger" onclick="cancelAppointment(${a.id})">Cancel</button>`
+                        ? `<button class="btn btn-sm btn-outline-danger" onclick="cancelAppointment('${Auth.escapeHtml(a.id)}')">Cancel</button>`
                         : ''}
                 </td>
             </tr>
@@ -265,16 +272,72 @@ async function cancelAppointment(id) {
     }
 }
 
+// Patients can only book on the weekdays a doctor works (the server checks this
+// too); show those days so the choice is obvious before submitting.
+let doctorInfo = {};
+const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Shows the chosen doctor's working days/hours and warns (and blocks the button)
+// as soon as the picked date or time is outside them. The server re-checks
+// everything, so this is purely to give instant feedback.
+function updateBookingHints() {
+    const doc = doctorInfo[document.getElementById('bookDoctor').value];
+    const hint = document.getElementById('bookDoctorDays');
+    const warning = document.getElementById('bookSlotWarning');
+    const submitBtn = document.getElementById('bookSubmitBtn');
+    const dateValue = document.getElementById('bookDate').value;
+    const timeValue = document.getElementById('bookTime').value;
+    let problem = '';
+
+    if (!doc) {
+        hint.textContent = '';
+    } else if (!doc.available_days || !doc.available_weekdays.length) {
+        hint.textContent = '';
+        problem = `${doc.name} has not set their available days yet, so they cannot be booked.`;
+    } else {
+        hint.textContent = `Available on: ${doc.available_days}` +
+            (doc.available_from ? ` (${doc.available_from} - ${doc.available_to})` : '');
+
+        if (dateValue) {
+            const weekday = new Date(`${dateValue}T00:00:00`).getDay();
+            if (!doc.available_weekdays.includes(weekday)) {
+                problem = `${doc.name} is not available on ${WEEKDAY_NAMES[weekday]}s. Please pick another date.`;
+            }
+        }
+        if (!problem && doc.available_from && timeValue &&
+            (timeValue < doc.available_from || timeValue >= doc.available_to)) {
+            problem = `${doc.name} only sees patients between ${doc.available_from} and ${doc.available_to}.`;
+        }
+    }
+
+    warning.textContent = problem;
+    submitBtn.disabled = !!problem;
+}
+['bookDoctor', 'bookDate', 'bookTime'].forEach((id) => {
+    document.getElementById(id).addEventListener('change', updateBookingHints);
+    document.getElementById(id).addEventListener('input', updateBookingHints);
+});
+
+// Don't offer dates in the past.
+(function setMinBookingDate() {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    document.getElementById('bookDate').min = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+})();
+
 async function loadDoctorsIntoSelect() {
     const select = document.getElementById('bookDoctor');
     try {
         const res = await Auth.apiFetch('/api/doctors');
-        select.innerHTML = res.data.map(d => `<option value="${d.id}">${Auth.escapeHtml(d.name)} (${Auth.escapeHtml(d.specialty) || 'General'})</option>`).join('');
+        doctorInfo = {};
+        res.data.forEach(d => { doctorInfo[d.id] = d; });
+        select.innerHTML = res.data.map(d => `<option value="${Auth.escapeHtml(d.id)}">${Auth.escapeHtml(d.name)} (${Auth.escapeHtml(d.specialty) || 'General'})</option>`).join('');
 
         // Pre-select doctor if we arrived here via a "Book" link from doctors.html
         const params = new URLSearchParams(window.location.search);
         const doctorId = params.get('doctor_id');
         if (doctorId) select.value = doctorId;
+        updateBookingHints();
     } catch (err) {
         select.innerHTML = `<option value="">${err.message}</option>`;
     }
@@ -289,7 +352,7 @@ document.getElementById('bookForm').addEventListener('submit', async function (e
         await Auth.apiFetch('/api/appointments', {
             method: 'POST',
             body: JSON.stringify({
-                doctor_id: Number(document.getElementById('bookDoctor').value),
+                doctor_id: document.getElementById('bookDoctor').value,
                 appointment_date: document.getElementById('bookDate').value,
                 appointment_time: document.getElementById('bookTime').value,
                 notes: document.getElementById('bookNotes').value || undefined,
@@ -298,6 +361,7 @@ document.getElementById('bookForm').addEventListener('submit', async function (e
         bootstrap.Modal.getInstance(document.getElementById('bookModal')).hide();
         showApptAlert('Appointment booked successfully.', 'success');
         document.getElementById('bookForm').reset();
+        updateBookingHints();
         loadAppointments();
     } catch (err) {
         errorBox.textContent = err.message;
