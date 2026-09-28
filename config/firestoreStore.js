@@ -1,28 +1,10 @@
-const path = require('path');
-const admin = require('firebase-admin');
+const admin = require('./firebase');
 
-function initFirebase() {
-  if (admin.apps.length) return;
-
-  const options = {};
-  if (process.env.FIREBASE_PROJECT_ID) options.projectId = process.env.FIREBASE_PROJECT_ID;
-
-  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-    options.credential = admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT));
-  } else if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH) {
-    options.credential = admin.credential.cert(
-      require(path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH))
-    );
-  }
-  admin.initializeApp(options);
-}
-
-initFirebase();
 const firestore = admin.firestore();
 firestore.settings({ ignoreUndefinedProperties: true });
 
 const nowIso = () => new Date().toISOString();
-const ALREADY_EXISTS = 6; 
+const ALREADY_EXISTS = 6; // gRPC status code
 
 function withId(snap) {
   return snap.exists ? { id: snap.id, ...snap.data() } : null;
