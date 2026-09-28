@@ -1,0 +1,11 @@
+rules_version = '2';
+// All data access goes through the Express server using the Firebase Admin
+// SDK (which bypasses these rules). Browsers must never talk to Firestore
+// directly, so every client read/write is denied.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
