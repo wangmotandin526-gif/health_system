@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const db = require('../config/db');
+const users = require('../utils/users');
 const verifyToken = require('../middleware/auth');
 const requireRole = require('../middleware/roles');
 const asyncHandler = require('../utils/asyncHandler');
@@ -16,6 +17,9 @@ const {
   validatePasswordChange,
   validateForgotPassword,
   validateResetPassword,
+  validateAdminUserUpdate,
+  validateAdminSetPassword,
+  isValidId,
 } = require('../middleware/validators');
 
 const router = express.Router();
@@ -45,30 +49,20 @@ function hashToken(token) {
   return crypto.createHash('sha256').update(token).digest('hex');
 }
 
+async function getUserOr404(id) {
+  const user = isValidId(id) ? await db.get('users', id) : null;
+  if (!user) throw new AppError('User not found', 404);
+  return user;
+}
+
 router.post(
   '/register',
   validateRegister,
   asyncHandler(async (req, res) => {
     const { full_name, email, password } = req.body;
+    const id = await users.createUser({ full_name, email, password, role: 'patient' });
 
-    const fullName = full_name.trim();
-    const normalizedEmail = email.trim().toLowerCase();
-
-    const [existing] = await db.query(
-      'SELECT id FROM users WHERE email = ?',
-      [normalizedEmail]
-    );
-    if (existing.length > 0) {
-      throw new AppError('Email already registered', 409);
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const [result] = await db.query(
-      'INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
-      [fullName, normalizedEmail, hashedPassword, 'patient']
-    );
-
-    logger.info(`New patient registered (user id ${result.insertId})`);
+    logger.info(`New patient registered (user id ${id})`);
     res.status(201).json({ success: true, message: 'Registration successful' });
   })
 );
@@ -82,29 +76,15 @@ router.post(
   asyncHandler(async (req, res) => {
     const { full_name, email, password, role } = req.body;
 
-    const fullName = full_name.trim();
-    const normalizedEmail = email.trim().toLowerCase();
     const allowedRoles = ['doctor', 'admin'];
     if (!role || !allowedRoles.includes(role)) {
       throw new AppError(`role must be one of: ${allowedRoles.join(', ')}`, 400);
     }
 
-    const [existing] = await db.query(
-      'SELECT id FROM users WHERE email = ?',
-      [normalizedEmail]
-    );
-    if (existing.length > 0) {
-      throw new AppError('Email already registered', 409);
-    }
+    const id = await users.createUser({ full_name, email, password, role });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const [result] = await db.query(
-      'INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
-      [fullName, normalizedEmail, hashedPassword, role]
-    );
-
-    logger.info(`Admin ${req.user.id} created a new ${role} account (user id ${result.insertId})`);
-    res.status(201).json({ success: true, message: `${role} account created`, data: { id: result.insertId } });
+    logger.info(`Admin ${req.user.id} created a new ${role} account (user id ${id})`);
+    res.status(201).json({ success: true, message: `${role} account created`, data: { id } });
   })
 );
 
@@ -114,19 +94,13 @@ router.post(
   validateLogin,
   asyncHandler(async (req, res) => {
     const { password } = req.body;
-    const normalizedEmail = req.body.email.trim().toLowerCase();
-    
-    const [users] = await db.query(
-      'SELECT * FROM users WHERE email = ?',
-      [normalizedEmail]
-    );
+    const user = await users.findByEmail(req.body.email);
 
-    if (users.length === 0) {
+    if (!user) {
       logger.warn(`Login failed: unknown email attempted from ${req.ip}`);
       throw new AppError('Invalid email or password', 401);
     }
 
-    const user = users[0];
     const match = await bcrypt.compare(password, user.password);
     if (!match) {
       logger.warn(`Login failed: wrong password for user ${user.id}`);
@@ -152,12 +126,8 @@ router.get(
   '/me',
   verifyToken,
   asyncHandler(async (req, res) => {
-    const [rows] = await db.query(
-      'SELECT id, full_name, email, role, created_at FROM users WHERE id = ?',
-      [req.user.id]
-    );
-    if (rows.length === 0) throw new AppError('User not found', 404);
-    res.json({ success: true, data: rows[0] });
+    const user = await getUserOr404(req.user.id);
+    res.json({ success: true, data: users.publicUser(user) });
   })
 );
 
@@ -167,11 +137,12 @@ router.patch(
   validateProfileUpdate,
   asyncHandler(async (req, res) => {
     const fullName = req.body.full_name.trim();
-    await db.query('UPDATE users SET full_name = ? WHERE id = ?', [fullName, req.user.id]);
+    const user = await getUserOr404(req.user.id);
+    await db.update('users', user.id, { full_name: fullName });
     logger.info(`User ${req.user.id} updated their profile`);
 
     const token = jwt.sign(
-      { id: req.user.id, role: req.user.role, full_name: fullName },
+      { id: user.id, role: user.role, full_name: fullName },
       process.env.JWT_SECRET,
       { expiresIn: '2h' }
     );
@@ -179,7 +150,7 @@ router.patch(
     res.json({
       success: true,
       message: 'Profile updated',
-      data: { token, user: { id: req.user.id, full_name: fullName, role: req.user.role } },
+      data: { token, user: { id: user.id, full_name: fullName, role: user.role } },
     });
   })
 );
@@ -190,10 +161,7 @@ router.post(
   validatePasswordChange,
   asyncHandler(async (req, res) => {
     const { current_password, new_password } = req.body;
-
-    const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [req.user.id]);
-    if (rows.length === 0) throw new AppError('User not found', 404);
-    const user = rows[0];
+    const user = await getUserOr404(req.user.id);
 
     const match = await bcrypt.compare(current_password, user.password);
     if (!match) {
@@ -201,7 +169,7 @@ router.post(
     }
 
     const hashed = await bcrypt.hash(new_password, 10);
-    await db.query('UPDATE users SET password = ? WHERE id = ?', [hashed, req.user.id]);
+    await db.update('users', user.id, { password: hashed });
     logger.info(`User ${req.user.id} changed their password`);
     res.json({ success: true, message: 'Password changed successfully' });
   })
@@ -215,13 +183,15 @@ router.post(
 // real deployment, replace the "return the token" step with actually
 // emailing resetUrl to the user and stop returning the token in the
 // response body.
+//
+// The token itself is never stored -- only its SHA-256 hash, which is also
+// used as the Firestore document id so the lookup on reset is a direct read.
 router.post(
   '/forgot-password',
   forgotPasswordLimiter,
   validateForgotPassword,
   asyncHandler(async (req, res) => {
-    const normalizedEmail = req.body.email.trim().toLowerCase();
-    const [users] = await db.query('SELECT id FROM users WHERE email = ?', [normalizedEmail]);
+    const user = await users.findByEmail(req.body.email);
 
     // Always return the same response whether or not the email exists,
     // so this endpoint can't be used to find out who has an account.
@@ -230,22 +200,21 @@ router.post(
       message: 'If that email is registered, a password reset token has been generated.',
     };
 
-    if (users.length === 0) {
+    if (!user) {
       logger.warn(`Password reset requested for unknown email from ${req.ip}`);
       return res.json(genericResponse);
     }
 
-    const userId = users[0].id;
     const token = crypto.randomBytes(32).toString('hex');
-    const tokenHash = hashToken(token);
     const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS).toISOString();
 
-    await db.query(
-      'INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)',
-      [userId, tokenHash, expiresAt]
-    );
+    await db.createWithId('password_resets', hashToken(token), {
+      user_id: user.id,
+      expires_at: expiresAt,
+      used: false,
+    });
 
-    logger.info(`Password reset token issued for user ${userId}`);
+    logger.info(`Password reset token issued for user ${user.id}`);
     res.json({
       ...genericResponse,
       // Demo-only: a real app emails this token/link instead of returning it.
@@ -262,22 +231,17 @@ router.post(
     const { token, new_password } = req.body;
     const tokenHash = hashToken(token);
 
-    const [rows] = await db.query(
-      'SELECT * FROM password_resets WHERE token_hash = ? AND used = 0',
-      [tokenHash]
-    );
-    if (rows.length === 0) {
+    const resetRecord = await db.get('password_resets', tokenHash);
+    if (!resetRecord || resetRecord.used) {
       throw new AppError('This reset token is invalid or has already been used', 400);
     }
-
-    const resetRecord = rows[0];
     if (new Date(resetRecord.expires_at).getTime() < Date.now()) {
       throw new AppError('This reset token has expired. Please request a new one.', 400);
     }
 
     const hashed = await bcrypt.hash(new_password, 10);
-    await db.query('UPDATE users SET password = ? WHERE id = ?', [hashed, resetRecord.user_id]);
-    await db.query('UPDATE password_resets SET used = 1 WHERE id = ?', [resetRecord.id]);
+    await db.update('users', resetRecord.user_id, { password: hashed });
+    await db.update('password_resets', tokenHash, { used: true });
 
     logger.info(`User ${resetRecord.user_id} reset their password via token`);
     res.json({ success: true, message: 'Password reset successfully. You can now log in.' });
@@ -291,10 +255,33 @@ router.get(
   verifyToken,
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const [rows] = await db.query(
-      'SELECT id, full_name, email, role, created_at FROM users ORDER BY created_at DESC'
-    );
-    res.json({ success: true, data: rows });
+    const rows = await db.find('users');
+    rows.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+    res.json({ success: true, data: rows.map(users.publicUser) });
+  })
+);
+
+// Edit another user's name / email (and optionally role).
+router.patch(
+  '/users/:id',
+  verifyToken,
+  requireRole('admin'),
+  validateAdminUserUpdate,
+  asyncHandler(async (req, res) => {
+    const target = await getUserOr404(req.params.id);
+    const { full_name, email, role } = req.body;
+
+    if (role !== undefined && role !== target.role && target.id === req.user.id) {
+      throw new AppError('You cannot change your own role', 400);
+    }
+
+    await users.changeEmail(target, email);
+    const patch = { full_name: full_name.trim() };
+    if (role !== undefined) patch.role = role;
+    await db.update('users', target.id, patch);
+
+    logger.info(`Admin ${req.user.id} edited user ${target.id}`);
+    res.json({ success: true, message: 'User updated' });
   })
 );
 
@@ -309,17 +296,31 @@ router.patch(
       throw new AppError(`role must be one of: ${allowedRoles.join(', ')}`, 400);
     }
 
-    const targetId = Number(req.params.id);
-    if (targetId === req.user.id) {
+    const target = await getUserOr404(req.params.id);
+    if (target.id === req.user.id) {
       throw new AppError('You cannot change your own role', 400);
     }
 
-    const [existing] = await db.query('SELECT id FROM users WHERE id = ?', [targetId]);
-    if (existing.length === 0) throw new AppError('User not found', 404);
-
-    await db.query('UPDATE users SET role = ? WHERE id = ?', [role, targetId]);
-    logger.info(`Admin ${req.user.id} set user ${targetId}'s role to ${role}`);
+    await db.update('users', target.id, { role });
+    logger.info(`Admin ${req.user.id} set user ${target.id}'s role to ${role}`);
     res.json({ success: true, message: 'Role updated' });
+  })
+);
+
+// Admin sets a new password for any account (e.g. a locked-out patient).
+// The user's existing login sessions stay valid until their token expires (2h).
+router.patch(
+  '/users/:id/password',
+  verifyToken,
+  requireRole('admin'),
+  validateAdminSetPassword,
+  asyncHandler(async (req, res) => {
+    const target = await getUserOr404(req.params.id);
+    const hashed = await bcrypt.hash(req.body.new_password, 10);
+    await db.update('users', target.id, { password: hashed });
+
+    logger.info(`Admin ${req.user.id} set a new password for user ${target.id}`);
+    res.json({ success: true, message: `Password updated for ${target.full_name}` });
   })
 );
 
@@ -328,26 +329,14 @@ router.delete(
   verifyToken,
   requireRole('admin'),
   asyncHandler(async (req, res) => {
-    const targetId = Number(req.params.id);
-    if (targetId === req.user.id) {
+    const target = await getUserOr404(req.params.id);
+    if (target.id === req.user.id) {
       throw new AppError('You cannot delete your own account', 400);
     }
 
-    const [existing] = await db.query('SELECT id FROM users WHERE id = ?', [targetId]);
-    if (existing.length === 0) throw new AppError('User not found', 404);
+    await users.deleteUser(target);
 
-    try {
-      await db.query('DELETE FROM users WHERE id = ?', [targetId]);
-    } catch (err) {
-      // Foreign key constraint (they have appointments/records/a doctor
-      // profile linked to them) -- deleting would orphan that data.
-      throw new AppError(
-        'This user has linked appointments, records, or a doctor profile and cannot be deleted. Consider changing their role instead.',
-        409
-      );
-    }
-
-    logger.info(`Admin ${req.user.id} deleted user ${targetId}`);
+    logger.info(`Admin ${req.user.id} deleted user ${target.id}`);
     res.json({ success: true, message: 'User deleted' });
   })
 );
