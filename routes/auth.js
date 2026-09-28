@@ -1,6 +1,5 @@
 const express = require('express');
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const db = require('../config/db');
@@ -32,9 +31,6 @@ const loginLimiter = rateLimit({
   message: { success: false, message: 'Too many login attempts. Please try again later.' },
 });
 
-// Same idea as loginLimiter: without this, someone could hammer
-// /forgot-password to enumerate which emails are registered, or to spam
-// the "reset link" generation endpoint.
 const forgotPasswordLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: process.env.NODE_ENV === 'test' ? 1000 : 5,
@@ -93,18 +89,21 @@ router.post(
   loginLimiter,
   validateLogin,
   asyncHandler(async (req, res) => {
-    const { password } = req.body;
-    const user = await users.findByEmail(req.body.email);
-
-    if (!user) {
-      logger.warn(`Login failed: unknown email attempted from ${req.ip}`);
-      throw new AppError('Invalid email or password', 401);
+    // Firebase Authentication checks the email + password. It answers the same
+    // way for an unknown email and a wrong password, so this endpoint can't be
+    // used to discover which emails have accounts.
+    let uid;
+    try {
+      uid = await users.verifyCredentials(req.body.email, req.body.password);
+    } catch (err) {
+      logger.warn(`Login failed from ${req.ip}: ${err.message}`);
+      throw err;
     }
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      logger.warn(`Login failed: wrong password for user ${user.id}`);
-      throw new AppError('Invalid email or password', 401);
+    const user = await db.get('users', uid);
+    if (!user) {
+      logger.warn(`Login failed: Firebase account ${uid} has no profile`);
+      throw new AppError('This account has no profile. Please contact an administrator.', 403);
     }
 
     const token = jwt.sign(
@@ -139,6 +138,7 @@ router.patch(
     const fullName = req.body.full_name.trim();
     const user = await getUserOr404(req.user.id);
     await db.update('users', user.id, { full_name: fullName });
+    await users.syncDisplayName(user.id, fullName);
     logger.info(`User ${req.user.id} updated their profile`);
 
     const token = jwt.sign(
@@ -163,29 +163,20 @@ router.post(
     const { current_password, new_password } = req.body;
     const user = await getUserOr404(req.user.id);
 
-    const match = await bcrypt.compare(current_password, user.password);
-    if (!match) {
-      throw new AppError('Current password is incorrect', 401);
+    try {
+      await users.verifyCredentials(user.email, current_password);
+    } catch (err) {
+      if (err.statusCode === 401) throw new AppError('Current password is incorrect', 401);
+      throw err;
     }
 
-    const hashed = await bcrypt.hash(new_password, 10);
-    await db.update('users', user.id, { password: hashed });
+    await users.setPassword(user.id, new_password);
     logger.info(`User ${req.user.id} changed their password`);
     res.json({ success: true, message: 'Password changed successfully' });
   })
 );
 
-// --- Forgot / reset password -------------------------------------------
-//
-// There is no email service wired up in this project, so instead of
-// emailing a reset link we hand the (one-time, 30-minute) token straight
-// back in the API response and the frontend displays it on screen. In a
-// real deployment, replace the "return the token" step with actually
-// emailing resetUrl to the user and stop returning the token in the
-// response body.
-//
-// The token itself is never stored -- only its SHA-256 hash, which is also
-// used as the Firestore document id so the lookup on reset is a direct read.
+
 router.post(
   '/forgot-password',
   forgotPasswordLimiter,
@@ -239,8 +230,7 @@ router.post(
       throw new AppError('This reset token has expired. Please request a new one.', 400);
     }
 
-    const hashed = await bcrypt.hash(new_password, 10);
-    await db.update('users', resetRecord.user_id, { password: hashed });
+    await users.setPassword(resetRecord.user_id, new_password);
     await db.update('password_resets', tokenHash, { used: true });
 
     logger.info(`User ${resetRecord.user_id} reset their password via token`);
@@ -279,6 +269,7 @@ router.patch(
     const patch = { full_name: full_name.trim() };
     if (role !== undefined) patch.role = role;
     await db.update('users', target.id, patch);
+    await users.syncDisplayName(target.id, patch.full_name);
 
     logger.info(`Admin ${req.user.id} edited user ${target.id}`);
     res.json({ success: true, message: 'User updated' });
@@ -307,8 +298,6 @@ router.patch(
   })
 );
 
-// Admin sets a new password for any account (e.g. a locked-out patient).
-// The user's existing login sessions stay valid until their token expires (2h).
 router.patch(
   '/users/:id/password',
   verifyToken,
@@ -316,8 +305,7 @@ router.patch(
   validateAdminSetPassword,
   asyncHandler(async (req, res) => {
     const target = await getUserOr404(req.params.id);
-    const hashed = await bcrypt.hash(req.body.new_password, 10);
-    await db.update('users', target.id, { password: hashed });
+    await users.setPassword(target.id, req.body.new_password);
 
     logger.info(`Admin ${req.user.id} set a new password for user ${target.id}`);
     res.json({ success: true, message: `Password updated for ${target.full_name}` });
