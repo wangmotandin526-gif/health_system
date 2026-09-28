@@ -5,6 +5,16 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
+if (
+  process.env.NODE_ENV !== 'test' &&
+  process.env.DB_DRIVER !== 'memory' &&
+  !process.env.FIREBASE_WEB_API_KEY &&
+  !process.env.FIREBASE_AUTH_EMULATOR_HOST
+) {
+  console.error('FIREBASE_WEB_API_KEY is not set. Add it to .env (Firebase console -> Project settings -> General -> Web API Key).');
+  process.exit(1);
+}
+
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'replace_this_with_a_long_random_string') {
   if (process.env.NODE_ENV !== 'test') {
     console.error('JWT_SECRET is missing or using the placeholder value. Set a strong, random secret in .env before starting the server.');
@@ -16,6 +26,7 @@ const authRoutes = require('./routes/auth');
 const doctorRoutes = require('./routes/doctors');
 const appointmentRoutes = require('./routes/appointments');
 const recordRoutes = require('./routes/records');
+const learningRoutes = require('./routes/learning');
 const setupRoutes = require('./routes/setup');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
@@ -62,6 +73,7 @@ const pages = [
   'records.html',
   'settings.html',
   'users.html',
+  'learning.html',
   'setup.html',
 ];
 pages.forEach((page) => {
@@ -76,6 +88,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/records', recordRoutes);
+app.use('/api/learning', learningRoutes);
 app.use('/api/setup', setupRoutes);
 
 app.get('/health', (req, res) => {
@@ -97,8 +110,8 @@ if (process.env.NODE_ENV !== 'test') {
 
   const shutdown = (signal) => {
     logger.info(`${signal} received, shutting down gracefully`);
-    server.close(() => {
-      db.close();
+    server.close(async () => {
+      await db.close();
       logger.info('Server and database connection closed');
       process.exit(0);
     });
