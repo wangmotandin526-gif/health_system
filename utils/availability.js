@@ -13,9 +13,14 @@ function parseAvailableDays(text) {
   if (typeof text !== 'string') return { days, invalid };
 
   const tokens = text
+    .toLowerCase()
+    .replace(/every\s*day|all\s*days|7\s*days|daily/g, 'mon-sun')
+    .replace(/week\s*days?/g, 'mon-fri')
+    .replace(/week\s*ends?/g, 'sat,sun')
+    .replace(/\s+(?:to|through|thru|until|till)\s+/g, '-') // "Mon to Fri" -> "Mon-Fri"
     .replace(/\s*[-–—]\s*/g, '-') // "Mon - Fri" -> "Mon-Fri"
-    .split(/[,;/&\s]+/)
-    .filter((t) => t && t.toLowerCase() !== 'and');
+    .split(/[,;/&+\s]+/)
+    .filter((t) => t && t !== 'and');
 
   tokens.forEach((token) => {
     if (token.includes('-')) {
@@ -40,19 +45,48 @@ function parseAvailableDays(text) {
   return { days, invalid };
 }
 
-function weekdayOf(dateStr) {
-  return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
-}
+const weekdayOf = (dateStr) => new Date(`${dateStr}T00:00:00Z`).getUTCDay();
 
-function formatDays(days) {
-  return [...days].sort((a, b) => a - b).map((d) => SHORT_LABELS[d]).join(', ');
-}
+const formatDays = (days) => [...days].sort((a, b) => a - b).map((d) => SHORT_LABELS[d]).join(', ');
+
+const weekdaysOf = (text) => [...parseAvailableDays(text).days].sort((a, b) => a - b);
 
 function checkAvailability(availableDays, dateStr) {
   const { days } = parseAvailableDays(availableDays);
-  if (days.size === 0) return { ok: true };
-  const ok = days.has(weekdayOf(dateStr));
-  return { ok, allowed: formatDays(days), weekday: LONG_NAMES[weekdayOf(dateStr)] };
+  if (days.size === 0) return { ok: false, reason: 'not_set' };
+  const weekday = weekdayOf(dateStr);
+  return {
+    ok: days.has(weekday),
+    reason: days.has(weekday) ? undefined : 'day',
+    allowed: formatDays(days),
+    weekday: LONG_NAMES[weekday],
+  };
 }
 
-module.exports = { parseAvailableDays, checkAvailability, formatDays, weekdayOf, LONG_NAMES };
+function bookingProblem(doctor, dateStr, timeStr) {
+  const check = checkAvailability(doctor.available_days, dateStr);
+
+  if (check.reason === 'not_set') {
+    return `${doctor.name} has not set their available days yet, so they cannot be booked at the moment.`;
+  }
+  if (!check.ok) {
+    const plural = `${check.weekday.charAt(0).toUpperCase()}${check.weekday.slice(1)}s`;
+    return `${doctor.name} is not available on ${plural}. Available days: ${check.allowed}`;
+  }
+
+  const { available_from: from, available_to: to } = doctor;
+  if (from && to && (timeStr < from || timeStr >= to)) {
+    return `${doctor.name} only sees patients between ${from} and ${to}. Please choose a time in that window.`;
+  }
+  return null;
+}
+
+module.exports = {
+  parseAvailableDays,
+  checkAvailability,
+  bookingProblem,
+  formatDays,
+  weekdayOf,
+  weekdaysOf,
+  LONG_NAMES,
+};
