@@ -1,21 +1,31 @@
-const bcrypt = require('bcryptjs');
 const db = require('../config/db');
+const { createUser: createUserRecord } = require('../utils/users');
 
 async function createUser({ full_name, email, password, role }) {
-  const hashed = await bcrypt.hash(password, 4); 
-  const [result] = await db.query(
-    'INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
-    [full_name, email, hashed, role]
-  );
-  return result.insertId;
+  return createUserRecord({ full_name, email, password, role });
 }
 
-async function createDoctor({ name, specialty = 'General', user_id = null }) {
-  const [result] = await db.query(
-    'INSERT INTO doctors (name, specialty, email, phone, available_days, photo_url, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [name, specialty, null, null, null, null, user_id]
-  );
-  return result.insertId;
+// Doctors default to working every day so tests that are not about availability
+// can book any date. Pass available_days: null to simulate a doctor with no days set.
+async function createDoctor({
+  name,
+  specialty = 'General',
+  user_id = null,
+  available_days = 'Mon-Sun',
+  available_from = null,
+  available_to = null,
+}) {
+  return db.create('doctors', {
+    name,
+    specialty,
+    email: null,
+    phone: null,
+    available_days,
+    available_from,
+    available_to,
+    photo_url: null,
+    user_id,
+  });
 }
 
 module.exports = { createUser, createDoctor };
