@@ -202,12 +202,39 @@
     </div>
 </div>
 
+<!-- Change role modal -->
+<div class="modal fade" id="roleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Change Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="roleForm">
+                <div class="modal-body">
+                    <p class="text-muted">Choose a new role for <strong id="roleUserName"></strong> (<span id="roleUserEmail"></span>).</p>
+                    <div id="roleError" class="alert alert-danger d-none"></div>
+                    <select class="form-select" id="roleSelect">
+                        <option value="patient">Patient</option>
+                        <option value="doctor">Doctor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Change Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Set password modal -->
 <div class="modal fade" id="passwordModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold">Set New Password</h5>
+                <h5 class="modal-title fw-bold">Change Password</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="passwordForm">
@@ -226,7 +253,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Set Password</button>
+                    <button type="submit" class="btn btn-primary">Change Password</button>
                 </div>
             </form>
         </div>
@@ -306,7 +333,10 @@ function renderUsers() {
                     <button class="btn btn-sm btn-outline-primary" data-action="edit" data-id="${Auth.escapeHtml(u.id)}" title="Edit account">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-secondary" data-action="password" data-id="${Auth.escapeHtml(u.id)}" title="Set new password">
+                    <button class="btn btn-sm btn-outline-info" data-action="role" data-id="${Auth.escapeHtml(u.id)}" title="Change role" ${isSelf ? 'disabled' : ''}>
+                        <i class="bi bi-person-gear"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" data-action="password" data-id="${Auth.escapeHtml(u.id)}" title="Change password">
                         <i class="bi bi-key"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${Auth.escapeHtml(u.id)}" title="Delete account" ${isSelf ? 'disabled' : ''}>
@@ -326,6 +356,7 @@ document.getElementById('usersTableBody').addEventListener('click', function (e)
     const user = allUsers.find((u) => u.id === btn.dataset.id);
     if (!user) return;
     if (btn.dataset.action === 'edit') openEdit(user);
+    if (btn.dataset.action === 'role') openRole(user);
     if (btn.dataset.action === 'password') openPassword(user);
     if (btn.dataset.action === 'delete') deleteUser(user);
 });
@@ -364,6 +395,37 @@ document.getElementById('editForm').addEventListener('submit', async function (e
         });
         editModal.hide();
         showAlert('pageAlert', 'Account updated.', 'success');
+        loadUsers();
+    } catch (err) {
+        errorBox.textContent = err.message;
+        errorBox.classList.remove('d-none');
+    }
+});
+
+// --- Change role ------------------------------------------------------------
+let roleUserId = null;
+const roleModal = new bootstrap.Modal(document.getElementById('roleModal'));
+
+function openRole(user) {
+    roleUserId = user.id;
+    document.getElementById('roleUserName').textContent = user.full_name;
+    document.getElementById('roleUserEmail').textContent = user.email;
+    document.getElementById('roleSelect').value = user.role;
+    document.getElementById('roleError').classList.add('d-none');
+    roleModal.show();
+}
+
+document.getElementById('roleForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errorBox = document.getElementById('roleError');
+    errorBox.classList.add('d-none');
+    try {
+        await Auth.apiFetch(`/api/auth/users/${encodeURIComponent(roleUserId)}/role`, {
+            method: 'PATCH',
+            body: JSON.stringify({ role: document.getElementById('roleSelect').value }),
+        });
+        roleModal.hide();
+        showAlert('pageAlert', 'Role updated.', 'success');
         loadUsers();
     } catch (err) {
         errorBox.textContent = err.message;
