@@ -43,6 +43,11 @@
                             <i class="bi bi-file-medical"></i> <span class="ms-1 d-none d-sm-inline">Records</span>
                         </a>
                     </li>
+                    <li class="w-100">
+                        <a href="learning.html" class="nav-link align-middle">
+                            <i class="bi bi-book"></i> <span class="ms-1 d-none d-sm-inline">Learning</span>
+                        </a>
+                    </li>
                     <li class="w-100 d-none" id="navUsersLink">
                         <a href="users.html" class="nav-link align-middle">
                             <i class="bi bi-people"></i> <span class="ms-1 d-none d-sm-inline">User Management</span>
@@ -160,12 +165,13 @@
         <div class="modal-content">
             <form id="addDoctorForm">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold">Add Doctor</h5>
+                    <h5 class="modal-title fw-bold" id="doctorModalTitle">Add Doctor</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
 
                     <div id="addDoctorError" class="alert alert-danger d-none" role="alert"></div>
+                    <input type="hidden" id="docEditId" value="">
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Full Name *</label>
@@ -187,9 +193,24 @@
                         <input type="text" id="docPhone" class="form-control" placeholder="0400123456">
                     </div>
 
-                    <div class="mb-0">
-                        <label class="form-label fw-semibold">Available Days</label>
-                        <input type="text" id="docDays" class="form-control" placeholder="Mon,Wed,Fri">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Available Days *</label>
+                        <input type="text" id="docDays" class="form-control" placeholder="Mon,Wed,Fri" maxlength="100" required>
+                        <div class="form-text">Days this doctor works, e.g. Mon,Wed,Fri or Mon-Fri. Patients can only book on these days.</div>
+                    </div>
+
+                    <div class="row g-3 mb-0">
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Working hours from</label>
+                            <input type="time" id="docFrom" class="form-control">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold">Working hours to</label>
+                            <input type="time" id="docTo" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-text mt-0">Optional. If set, patients can only book times from the start time up to (not including) the end time.</div>
+                        </div>
                     </div>
 
                 </div>
@@ -243,13 +264,22 @@ function renderDoctors(doctors) {
                 <td>${Auth.escapeHtml(doc.specialty) || '-'}</td>
                 <td>${Auth.escapeHtml(doc.email) || '-'}</td>
                 <td>${Auth.escapeHtml(doc.phone) || '-'}</td>
-                <td>${Auth.escapeHtml(doc.available_days) || '-'}</td>
+                <td>
+                    ${doc.available_days
+                        ? `${Auth.escapeHtml(doc.available_days)}${doc.available_from
+                            ? `<div class="small text-muted">${Auth.escapeHtml(doc.available_from)} - ${Auth.escapeHtml(doc.available_to)}</div>`
+                            : ''}`
+                        : '<span class="badge bg-warning text-dark">Not set</span>'}
+                </td>
                 <td>
                     <a href="appointments.html?doctor_id=${doc.id}&doctor_name=${encodeURIComponent(doc.name)}"
-                       class="btn btn-sm btn-primary">
+                       class="btn btn-sm btn-primary ${doc.available_weekdays && doc.available_weekdays.length ? '' : 'disabled'}">
                         Book
                     </a>
                     ${isAdmin ? `
+                    <button type="button" class="btn btn-sm btn-outline-primary ms-1 edit-doctor-btn" data-id="${doc.id}" title="Edit doctor and availability">
+                        <i class="bi bi-pencil"></i>
+                    </button>
                     <button type="button" class="btn btn-sm btn-outline-danger ms-1 delete-doctor-btn" data-id="${doc.id}" data-name="${Auth.escapeHtml(doc.name)}">
                         <i class="bi bi-trash"></i>
                     </button>` : ''}
@@ -276,10 +306,36 @@ document.getElementById('doctorSearch').addEventListener('input', function () {
     renderDoctors(filtered);
 });
 
+// One modal serves both "Add Doctor" and "Edit Doctor" (admin only).
+const doctorModalEl = document.getElementById('addDoctorModal');
+const ADD_LABEL = '<i class="bi bi-plus-lg me-1"></i> Add Doctor';
+const SAVE_LABEL = '<i class="bi bi-check-lg me-1"></i> Save Changes';
+
+function setDoctorFormMode(doc) {
+    document.getElementById('addDoctorForm').reset();
+    document.getElementById('addDoctorError').classList.add('d-none');
+    document.getElementById('docEditId').value = doc ? doc.id : '';
+    document.getElementById('doctorModalTitle').textContent = doc ? 'Edit Doctor' : 'Add Doctor';
+    document.getElementById('addDoctorSubmitBtn').innerHTML = doc ? SAVE_LABEL : ADD_LABEL;
+    if (doc) {
+        document.getElementById('docName').value = doc.name || '';
+        document.getElementById('docSpecialty').value = doc.specialty || '';
+        document.getElementById('docEmail').value = doc.email || '';
+        document.getElementById('docPhone').value = doc.phone || '';
+        document.getElementById('docDays').value = doc.available_days || '';
+        document.getElementById('docFrom').value = doc.available_from || '';
+        document.getElementById('docTo').value = doc.available_to || '';
+    }
+}
+
+// Runs before Bootstrap's own handler opens the modal.
+document.getElementById('addDoctorBtn').addEventListener('click', () => setDoctorFormMode(null));
+
 document.getElementById('addDoctorForm').addEventListener('submit', async function (e) {
     e.preventDefault();
     const errorBox = document.getElementById('addDoctorError');
     const btn = document.getElementById('addDoctorSubmitBtn');
+    const editId = document.getElementById('docEditId').value;
     errorBox.classList.add('d-none');
 
     const payload = {
@@ -287,29 +343,41 @@ document.getElementById('addDoctorForm').addEventListener('submit', async functi
         specialty: document.getElementById('docSpecialty').value.trim() || undefined,
         email: document.getElementById('docEmail').value.trim() || undefined,
         phone: document.getElementById('docPhone').value.trim() || undefined,
-        available_days: document.getElementById('docDays').value.trim() || undefined,
+        available_days: document.getElementById('docDays').value.trim(),
+        available_from: document.getElementById('docFrom').value || undefined,
+        available_to: document.getElementById('docTo').value || undefined,
     };
 
     btn.disabled = true;
-    btn.textContent = 'Adding...';
+    btn.textContent = editId ? 'Saving...' : 'Adding...';
     try {
-        await Auth.apiFetch('/api/doctors', {
-            method: 'POST',
+        await Auth.apiFetch(editId ? `/api/doctors/${encodeURIComponent(editId)}` : '/api/doctors', {
+            method: editId ? 'PUT' : 'POST',
             body: JSON.stringify(payload),
         });
-        document.getElementById('addDoctorForm').reset();
-        bootstrap.Modal.getInstance(document.getElementById('addDoctorModal')).hide();
+        bootstrap.Modal.getInstance(doctorModalEl).hide();
+        setDoctorFormMode(null);
         await loadDoctors();
     } catch (err) {
         errorBox.textContent = err.message;
         errorBox.classList.remove('d-none');
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i> Add Doctor';
+        btn.innerHTML = document.getElementById('docEditId').value ? SAVE_LABEL : ADD_LABEL;
     }
 });
 
 document.getElementById('doctorsTableBody').addEventListener('click', async function (e) {
+    const editBtn = e.target.closest('.edit-doctor-btn');
+    if (editBtn) {
+        const doc = doctorsCache.find((d) => d.id === editBtn.dataset.id);
+        if (doc) {
+            setDoctorFormMode(doc);
+            bootstrap.Modal.getOrCreateInstance(doctorModalEl).show();
+        }
+        return;
+    }
+
     const delBtn = e.target.closest('.delete-doctor-btn');
     if (!delBtn) return;
 
