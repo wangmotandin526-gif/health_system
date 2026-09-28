@@ -29,7 +29,7 @@ router.get(
       throw new AppError(`category must be one of: ${ARTICLE_CATEGORIES.join(', ')}`, 400);
     }
 
-    const rows = await db.find('articles', category ? { category } : {});
+    const rows = await db.find('learning', category ? { category } : {});
     rows.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
     res.json({ success: true, data: rows.map(toPublic), categories: ARTICLE_CATEGORIES });
   })
@@ -42,7 +42,7 @@ router.post(
   validateArticle,
   asyncHandler(async (req, res) => {
     const { title, category, summary, content } = req.body;
-    const id = await db.create('articles', {
+    const id = await db.create('learning', {
       title: title.trim(),
       category,
       summary: summary ? summary.trim() : null,
@@ -60,14 +60,14 @@ router.delete(
   verifyToken,
   requireRole('doctor', 'admin'),
   asyncHandler(async (req, res) => {
-    const article = isValidId(req.params.id) ? await db.get('articles', req.params.id) : null;
+    const article = isValidId(req.params.id) ? await db.get('learning', req.params.id) : null;
     if (!article) throw new AppError('Article not found', 404);
 
     if (req.user.role !== 'admin' && article.author_id !== req.user.id) {
       throw new AppError('You can only delete articles you wrote', 403);
     }
 
-    await db.remove('articles', article.id);
+    await db.remove('learning', article.id);
     logger.info(`User ${req.user.id} (${req.user.role}) deleted article ${article.id}`);
     res.json({ success: true, message: 'Article deleted' });
   })
