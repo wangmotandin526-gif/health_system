@@ -16,7 +16,7 @@ beforeAll(async () => {
   const doctorRes = await request(app)
     .post('/api/doctors')
     .set('Authorization', `Bearer ${adminToken}`)
-    .send({ name: 'Dr. Validation' });
+    .send({ name: 'Dr. Validation', available_days: 'Mon-Sun' });
   doctorId = doctorRes.body.data.id;
 });
 
