@@ -73,7 +73,6 @@ const pages = [
   'records.html',
   'settings.html',
   'users.html',
-  'learning.html',
   'setup.html',
 ];
 pages.forEach((page) => {
