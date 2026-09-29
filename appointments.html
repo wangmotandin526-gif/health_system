@@ -291,7 +291,7 @@ function updateBookingHints() {
 
     if (!doc) {
         hint.textContent = '';
-    } else if (!doc.available_days || !doc.available_weekdays.length) {
+    } else if (!doc.available_days || (doc.available_weekdays && !doc.available_weekdays.length)) {
         hint.textContent = '';
         problem = `${doc.name} has not set their available days yet, so they cannot be booked.`;
     } else {
@@ -300,7 +300,7 @@ function updateBookingHints() {
 
         if (dateValue) {
             const weekday = new Date(`${dateValue}T00:00:00`).getDay();
-            if (!doc.available_weekdays.includes(weekday)) {
+            if (doc.available_weekdays && !doc.available_weekdays.includes(weekday)) {
                 problem = `${doc.name} is not available on ${WEEKDAY_NAMES[weekday]}s. Please pick another date.`;
             }
         }
