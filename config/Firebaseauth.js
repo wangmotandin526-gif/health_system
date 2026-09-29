@@ -1,16 +1,3 @@
-// Firebase Authentication provider. Firebase owns every account's email and
-// password; Firestore only keeps the profile (name, role) under users/{uid}.
-//
-// - Account management (create / update / delete / set password) uses the
-//   Admin SDK.
-// - Checking an email + password uses Firebase's "signInWithPassword" REST
-//   endpoint, because the Admin SDK cannot verify passwords. That call needs
-//   the project's Web API key (Firebase console -> Project settings ->
-//   General -> "Web API Key"), set as FIREBASE_WEB_API_KEY.
-//
-// Errors are normalised to err.code in:
-//   EMAIL_EXISTS, USER_NOT_FOUND, WEAK_PASSWORD, INVALID_EMAIL,
-//   INVALID_CREDENTIALS, TOO_MANY_ATTEMPTS, USER_DISABLED
 const admin = require('./firebase');
 
 const authError = (code, message) => Object.assign(new Error(message || code), { code });
@@ -69,7 +56,6 @@ function signInUrl() {
   return `${base}/accounts:signInWithPassword?key=${encodeURIComponent(key)}`;
 }
 
-// Returns the account's uid when the email/password pair is valid.
 async function signIn(email, password) {
   const res = await fetch(signInUrl(), {
     method: 'POST',
