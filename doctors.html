@@ -273,7 +273,7 @@ function renderDoctors(doctors) {
                 </td>
                 <td>
                     <a href="appointments.html?doctor_id=${doc.id}&doctor_name=${encodeURIComponent(doc.name)}"
-                       class="btn btn-sm btn-primary ${doc.available_weekdays && doc.available_weekdays.length ? '' : 'disabled'}">
+                       class="btn btn-sm btn-primary ${doc.available_days ? '' : 'disabled'}">
                         Book
                     </a>
                     ${isAdmin ? `
@@ -370,7 +370,7 @@ document.getElementById('addDoctorForm').addEventListener('submit', async functi
 document.getElementById('doctorsTableBody').addEventListener('click', async function (e) {
     const editBtn = e.target.closest('.edit-doctor-btn');
     if (editBtn) {
-        const doc = doctorsCache.find((d) => d.id === editBtn.dataset.id);
+        const doc = doctorsCache.find((d) => String(d.id) === String(editBtn.dataset.id));
         if (doc) {
             setDoctorFormMode(doc);
             bootstrap.Modal.getOrCreateInstance(doctorModalEl).show();
