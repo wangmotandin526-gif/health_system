@@ -30,12 +30,12 @@ const Auth = {
   logout() {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
-    window.location.href = 'login.html';
+    window.location.href = 'home.html';
   },
 
   requireAuth() {
     if (!this.getToken()) {
-      window.location.href = 'login.html';
+      window.location.href = 'home.html';
       return null;
     }
     return this.getUser();
