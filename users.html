@@ -354,11 +354,19 @@ document.getElementById('usersTableBody').addEventListener('click', function (e)
     const btn = e.target.closest('button[data-action]');
     if (!btn) return;
     const user = allUsers.find((u) => String(u.id) === String(btn.dataset.id));
-    if (!user) return;
-    if (btn.dataset.action === 'edit') openEdit(user);
-    if (btn.dataset.action === 'role') openRole(user);
-    if (btn.dataset.action === 'password') openPassword(user);
-    if (btn.dataset.action === 'delete') deleteUser(user);
+    if (!user) {
+        showAlert('pageAlert', 'Could not find that user in the list. Refresh the page and try again.', 'danger');
+        return;
+    }
+    try {
+        if (btn.dataset.action === 'edit') openEdit(user);
+        if (btn.dataset.action === 'role') openRole(user);
+        if (btn.dataset.action === 'password') openPassword(user);
+        if (btn.dataset.action === 'delete') deleteUser(user);
+    } catch (err) {
+        console.error(err);
+        showAlert('pageAlert', `Something went wrong: ${err.message}`, 'danger');
+    }
 });
 
 // --- Edit account -----------------------------------------------------------
