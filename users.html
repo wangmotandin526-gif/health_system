@@ -321,7 +321,7 @@ function renderUsers() {
     }
 
     tbody.innerHTML = users.map((u, i) => {
-        const isSelf = u.id === currentUser.id;
+        const isSelf = String(u.id) === String(currentUser.id);
         return `
             <tr>
                 <td>${i + 1}</td>
@@ -353,7 +353,7 @@ document.getElementById('roleFilter').addEventListener('change', renderUsers);
 document.getElementById('usersTableBody').addEventListener('click', function (e) {
     const btn = e.target.closest('button[data-action]');
     if (!btn) return;
-    const user = allUsers.find((u) => u.id === btn.dataset.id);
+    const user = allUsers.find((u) => String(u.id) === String(btn.dataset.id));
     if (!user) return;
     if (btn.dataset.action === 'edit') openEdit(user);
     if (btn.dataset.action === 'role') openRole(user);
@@ -367,7 +367,7 @@ const editModal = new bootstrap.Modal(document.getElementById('editModal'));
 
 function openEdit(user) {
     editingId = user.id;
-    const isSelf = user.id === currentUser.id;
+    const isSelf = String(user.id) === String(currentUser.id);
     document.getElementById('editError').classList.add('d-none');
     document.getElementById('editName').value = user.full_name;
     document.getElementById('editEmail').value = user.email;
