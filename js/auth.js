@@ -1,4 +1,6 @@
-const API_BASE = 'https://health-system-sosd.onrender.com';
+const API_BASE = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  ? ''
+  : 'https://health-system-sosd.onrender.com';
 
 const Auth = {
   escapeHtml(value) {
@@ -55,11 +57,6 @@ const Auth = {
     }
 
     if (res.status === 401 && token) {
-      // We sent a session token and the server rejected it -- that's an
-      // expired/invalid session. A 401 with NO token (e.g. the login
-      // request itself, which never had a token to send) just means
-      // "wrong email or password" and should fall through to show the
-      // server's own error message instead of silently redirecting.
       this.logout();
       throw new Error('Session expired, please log in again.');
     }
@@ -77,12 +74,6 @@ const Auth = {
   },
 };
 
-// Adds a show/hide eye button to every password field on the page, so
-// the user can check what they typed before submitting. Works whether
-// the input already sits inside a Bootstrap .input-group (login,
-// register) or is a plain .form-control on its own (settings, reset
-// password, create-staff) -- it wraps it in an .input-group on the fly
-// if needed.
 function addPasswordToggles() {
   document.querySelectorAll('input[type="password"]').forEach((input) => {
     if (input.dataset.toggleAdded) return;
