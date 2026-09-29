@@ -5,43 +5,50 @@ const requireRole = require('../middleware/roles');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
-const { validateRecord } = require('../middleware/validators');
-
-const SELECT_WITH_DOCTOR = `SELECT
-       r.id,
-       r.patient_id,
-       r.doctor_id,
-       r.diagnosis,
-       r.prescription,
-       r.visit_date,
-       d.name AS doctor_name
-       FROM records r
-       LEFT JOIN doctors d ON r.doctor_id = d.id`;
+const { validateRecord, isValidId } = require('../middleware/validators');
 
 const router = express.Router();
 
+// Look up a patient's records and attach each doctor's name (newest visit first).
+async function recordsForPatient(patientId) {
+  const records = await db.find('records', { patient_id: String(patientId) });
+  const doctors = await db.getMany('doctors', records.map((r) => r.doctor_id));
+
+  return records
+    .map((r) => ({
+      id: r.id,
+      patient_id: r.patient_id,
+      doctor_id: r.doctor_id ?? null,
+      diagnosis: r.diagnosis ?? null,
+      prescription: r.prescription ?? null,
+      visit_date: r.visit_date ?? null,
+      doctor_name: r.doctor_id && doctors[r.doctor_id] ? doctors[r.doctor_id].name : null,
+      _sort: r.visit_date || r.created_at || '',
+    }))
+    .sort((a, b) => (a._sort < b._sort ? 1 : a._sort > b._sort ? -1 : 0))
+    .map(({ _sort, ...rest }) => rest);
+}
 
 router.get(
   '/my',
   verifyToken,
   requireRole('patient'),
   asyncHandler(async (req, res) => {
-    const [rows] = await db.query(`${SELECT_WITH_DOCTOR} WHERE r.patient_id = ?`, [req.user.id]);
-    res.json({ success: true, data: rows });
+    const data = await recordsForPatient(req.user.id);
+    res.json({ success: true, data });
   })
 );
-
 
 router.get(
   '/patient/:patientId',
   verifyToken,
   requireRole('doctor', 'admin'),
   asyncHandler(async (req, res) => {
-    const [patientRows] = await db.query('SELECT id FROM users WHERE id = ? AND role = ?', [req.params.patientId, 'patient']);
-    if (patientRows.length === 0) throw new AppError('Patient not found', 404);
+    const patient = isValidId(req.params.patientId) ? await db.get('users', req.params.patientId) : null;
+    if (!patient || patient.role !== 'patient') throw new AppError('Patient not found', 404);
 
-    const [rows] = await db.query(`${SELECT_WITH_DOCTOR} WHERE r.patient_id = ?`, [req.params.patientId]);
-    res.json({ success: true, data: rows });
+    const data = await recordsForPatient(patient.id);
+    res.json({ success: true, data });
   })
 );
 
@@ -53,20 +60,26 @@ router.post(
   asyncHandler(async (req, res) => {
     const { patient_id, doctor_id, diagnosis, prescription, visit_date } = req.body;
 
-    const [patientRows] = await db.query('SELECT id FROM users WHERE id = ? AND role = ?', [patient_id, 'patient']);
-    if (patientRows.length === 0) throw new AppError('patient_id does not reference an existing patient', 400);
-
-    if (doctor_id) {
-      const [doctorRows] = await db.query('SELECT id FROM doctors WHERE id = ?', [doctor_id]);
-      if (doctorRows.length === 0) throw new AppError('doctor_id does not reference an existing doctor', 400);
+    const patient = await db.get('users', patient_id);
+    if (!patient || patient.role !== 'patient') {
+      throw new AppError('patient_id does not reference an existing patient', 400);
     }
 
-    const [result] = await db.query(
-      'INSERT INTO records (patient_id, doctor_id, diagnosis, prescription, visit_date) VALUES (?, ?, ?, ?, ?)',
-      [patient_id, doctor_id || null, diagnosis || null, prescription || null, visit_date || null]
-    );
-    logger.info(`User ${req.user.id} (${req.user.role}) added record ${result.insertId} for patient ${patient_id}`);
-    res.status(201).json({ success: true, message: 'Record added', data: { id: result.insertId } });
+    if (doctor_id) {
+      const doctor = isValidId(doctor_id) ? await db.get('doctors', doctor_id) : null;
+      if (!doctor) throw new AppError('doctor_id does not reference an existing doctor', 400);
+    }
+
+    const id = await db.create('records', {
+      patient_id: String(patient_id),
+      doctor_id: doctor_id ? String(doctor_id) : null,
+      diagnosis: diagnosis || null,
+      prescription: prescription || null,
+      visit_date: visit_date || null,
+    });
+
+    logger.info(`User ${req.user.id} (${req.user.role}) added record ${id} for patient ${patient_id}`);
+    res.status(201).json({ success: true, message: 'Record added', data: { id } });
   })
 );
 
